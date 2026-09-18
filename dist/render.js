@@ -136,11 +136,11 @@ export function createRenderer(canvas){
     }else{
       showcase.root.visible=false;
       const moving=Math.min(1,Math.abs(p.speed)/4),frequency=game.mode==='foot'?(p.boosting?15:10):22;
-      const bob=reduced?0:Math.sin(time*frequency)*(game.mode==='foot'?.035:.013)*moving;
+      const bob=reduced?0:game.mode==='foot'?cockpit.motion.bob:Math.sin(time*frequency)*.013*moving;
       if(game.damageCount!==lastDamage){shake=.22;lastDamage=game.damageCount}if(game.passCount!==lastPass){shake=Math.max(shake,.055);lastPass=game.passCount}shake=Math.max(0,shake-dt*.5);
       const fall=game.status==='lost'?.7:0;
       camera.position.set(p.x+(reduced?0:Math.sin(time*73)*shake),p.y+bob-fall-(reduced?0:p.landing*.2),p.z+(reduced?0:Math.cos(time*61)*shake));
-      camera.rotation.set(p.pitch+(reduced?0:Math.sin(time*61)*shake*.12),p.yaw,game.status==='lost'?.3:reduced?0:Math.sin(time*frequency*.5)*.007*moving,'YXZ');
+      camera.rotation.set(p.pitch+(reduced?0:Math.sin(time*61)*shake*.12),p.yaw,game.status==='lost'?.3:reduced?0:game.mode==='foot'?cockpit.motion.roll:Math.sin(time*frequency*.5)*.007*moving,'YXZ');
       const targetFov=game.mode==='armor'?65:p.boosting?84:76;fov+=(targetFov-fov)*Math.min(dt*4,1);if(Math.abs(camera.fov-fov)>.05){camera.fov=fov;camera.updateProjectionMatrix()}
 
     }

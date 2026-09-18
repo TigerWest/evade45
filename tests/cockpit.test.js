@@ -48,3 +48,34 @@ test('vehicles follow chassis position and heading, hide in menu, and dispose cl
   game.status='ready';update();let node=hull,hidden=false;while(node){hidden||=!node.visible;node=node.parent}assert.ok(hidden);
   cockpit.destroy();assert.equal(scene.children.length,1);assert.equal(camera.children.length,0);
 });
+
+function footPose(camera){const values=[];camera.children[0].traverse(o=>values.push(...o.position.toArray(),...o.quaternion.toArray()));return values}
+function maxChange(a,b){return Math.max(...a.map((value,i)=>Math.abs(value-b[i])))}
+
+test('foot gait depends on simulated motion, not the wall clock at which play starts',t=>{
+  const a=fixture(t),b=fixture(t);
+  for(const f of [a,b]){f.game.mode='foot';f.game.player.speed=4.9}
+  for(let i=0;i<60;i++){
+    a.cockpit.update(a.game,i/60,1/60,false);
+    b.cockpit.update(b.game,100+i/60,1/60,false);
+  }
+  assert.ok(maxChange(footPose(a.camera),footPose(b.camera))<1e-8);
+});
+
+test('pausing freezes the arms and resuming does not skip ahead in the gait',t=>{
+  const {camera,cockpit,game}=fixture(t);game.mode='foot';game.player.speed=4.9;
+  for(let i=0;i<60;i++)cockpit.update(game,i/60,1/60,false);
+  game.status='paused';const before=footPose(camera);
+  cockpit.update(game,80,1/60,false);cockpit.update(game,120,1/60,false);
+  assert.ok(maxChange(before,footPose(camera))<1e-8);
+  game.status='playing';cockpit.update(game,121,1/60,false);
+  assert.ok(maxChange(before,footPose(camera))<.06);
+});
+
+test('sprint and jump poses blend in instead of snapping on a single frame',t=>{
+  const {camera,cockpit,game}=fixture(t);game.mode='foot';game.player.speed=4.9;
+  for(let i=0;i<60;i++)cockpit.update(game,i/60,1/60,false);
+  const before=footPose(camera);game.player.boosting=true;game.player.altitude=.1;
+  cockpit.update(game,1,1/120,false);
+  assert.ok(maxChange(before,footPose(camera))<.025);
+});

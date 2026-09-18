@@ -54,27 +54,41 @@ export function createCockpit(camera){
     rod(g,[0,-.024,.115],[0,-.015,.071],.053,leather,.049);
     rod(g,[side*.042,.002,.103],[side*.095,-.15,.27],.002,seam);
     box(g,side*.024,.03,.09,.038,.012,.032,black);box(g,side*.024,.037,.09,.025,.003,.015,edge);
-    oval(g,0,0,.006,.064,.032,.07,leather);
-    oval(g,0,.023,-.004,.049,.015,.045,leather);
+    const wristJoint=new THREE.Group(),palm=new THREE.Group();g.add(wristJoint);wristJoint.add(palm);
+    wristJoint.position.set(0,-.015,.071);palm.position.set(0,.015,-.071);g.userData.wrist=wristJoint;
+    oval(palm,0,0,.006,.064,.032,.07,leather);
+    oval(palm,0,.023,-.004,.049,.015,.045,leather);
     // Four separately bent fingers, exposed knuckles, nail beds and flexion lines.
     for(let i=0;i<4;i++){
       const fx=(i-1.5)*.028,len=[.064,.076,.07,.052][i],r=[.014,.015,.014,.012][i];
       const pts=grip?[[fx,.006,-.04],[fx,.006,-.04-len*.55],[fx,-.032,-.047-len*.6],[fx,-.05,-.039]]:
         [[fx,.01,-.04],[fx,.004,-.04-len*.65],[fx,-.022,-.043-len],[fx,-.045,-.036-len*.72]];
-      for(let j=0;j<3;j++){rod(g,pts[j],pts[j+1],r,skin,r*.92);oval(g,...pts[j],r,r*.95,r,skin)}
-      oval(g,...pts[3],r*.91,r*.86,r*.92,skin);
-      const knuckle=pts[1];rod(g,[fx-r*.6,knuckle[1]+r*.9,knuckle[2]],[fx+r*.6,knuckle[1]+r*.9,knuckle[2]],.0014,crease);
-      const tip=pts[3];oval(g,fx,tip[1]+r*.55,tip[2]-.004,r*.57,.0025,.009,nail);
-      oval(g,fx,.03,-.03,.012,.008,.017,edge);
+      for(let j=0;j<3;j++){rod(palm,pts[j],pts[j+1],r,skin,r*.92);oval(palm,...pts[j],r,r*.95,r,skin)}
+      oval(palm,...pts[3],r*.91,r*.86,r*.92,skin);
+      const knuckle=pts[1];rod(palm,[fx-r*.6,knuckle[1]+r*.9,knuckle[2]],[fx+r*.6,knuckle[1]+r*.9,knuckle[2]],.0014,crease);
+      const tip=pts[3];oval(palm,fx,tip[1]+r*.55,tip[2]-.004,r*.57,.0025,.009,nail);
+      oval(palm,fx,.03,-.03,.012,.008,.017,edge);
     }
-    const thumb=[[side*.05,-.009,.02],[side*.078,-.026,-.012],[side*.072,-.05,-.04],[side*.041,-.054,-.056]];
-    for(let i=0;i<3;i++){rod(g,thumb[i],thumb[i+1],.018-i*.001,skin);oval(g,...thumb[i],.019,.018,.019,skin)}
-    oval(g,...thumb[3],.015,.014,.017,skin);
-    for(const sideX of [-1,1])rod(g,[sideX*.047,.026,.035],[sideX*.047,.028,-.014],.0017,seam);
+    const thumb=[[-side*.05,-.009,.02],[-side*.078,-.026,-.012],[-side*.072,-.05,-.04],[-side*.041,-.054,-.056]];
+    for(let i=0;i<3;i++){rod(palm,thumb[i],thumb[i+1],.018-i*.001,skin);oval(palm,...thumb[i],.019,.018,.019,skin)}
+    oval(palm,...thumb[3],.015,.014,.017,skin);
+    for(const sideX of [-1,1])rod(palm,[sideX*.047,.026,.035],[sideX*.047,.028,-.014],.0017,seam);
     return g;
   }
-  const footHands=[hand(views.foot,-1,-.29,-.36,-.61),hand(views.foot,1,.29,-.38,-.57)];
-  footHands.forEach((h,i)=>{h.rotation.y=(i?1:-1)*-.18;h.rotation.z=(i?1:-1)*-.16});
+  // Anchor each arm at the shoulder and elbow; the wrist adds a small delayed
+  // rotation. Moving the joints keeps the sleeve attached instead of sliding a fist.
+  const footArms=[-1,1].map(side=>{
+    const shoulder=new THREE.Group(),elbow=new THREE.Group();views.foot.add(shoulder);shoulder.add(elbow);
+    shoulder.position.set(side*.43,-.22,.09);elbow.position.set(0,-.28,0);
+    rod(shoulder,[0,0,0],[0,-.28,0],.087,cloth,.078);
+    oval(shoulder,0,-.28,0,.08,.084,.08,cloth);
+    const fist=hand(elbow,side,-side*.14,.34,-.43);
+    elbow.rotation.x=-.74;
+    fist.userData.wrist.rotation.z=-side*.5;
+    return {side,shoulder,elbow,wrist:fist.userData.wrist};
+  });
+  const motion={bob:0,roll:0};
+  let gaitPhase=0,gaitWeight=0,sprintWeight=0,airWeight=0,strafe=0,lookLag=0,lastLook=0,animationGame=null;
 
   // Dials use one static face texture; only the needle moves at runtime.
   function gauge(parent,x,y,z,r,max,unit){
@@ -233,24 +247,41 @@ export function createCockpit(camera){
   let active='',lastYaw=null,steer=0;
   function update(game,time,dt,reduced){
     const p=game.player;
-    if(active!==game.mode){for(const [mode,g] of Object.entries(views))g.visible=mode===game.mode;active=game.mode;lastYaw=null;steer=0}
+    if(active!==game.mode||animationGame!==game){for(const [mode,g] of Object.entries(views))g.visible=mode===game.mode;active=game.mode;lastYaw=null;steer=0;animationGame=game;gaitPhase=gaitWeight=sprintWeight=airWeight=strafe=lookLag=0;lastLook=p.yaw;motion.bob=motion.roll=0}
     root.visible=vehicle.visible=game.status!=='ready';
     vehicle.position.set(p.x,p.y,p.z);vehicle.rotation.set(0,p.bodyYaw,0);
-    const moving=clamp(Math.abs(p.speed)/4,0,1),frequency=p.boosting?15:10;
+    const moving=clamp(Math.abs(p.speed)/4,0,1);
     const yawRate=lastYaw===null||dt<=0||game.status!=='playing'?0:angleDifference(p.bodyYaw,lastYaw)/dt;
     lastYaw=p.bodyYaw;steer+=(clamp(-yawRate*.23,-.3,.3)-steer)*Math.min(dt*9,1);
-    footHands.forEach((h,i)=>{
-      const sign=i?1:-1,swing=reduced?0:Math.sin(time*frequency*.5+i*Math.PI)*moving;
-      h.position.y=(i?-.38:-.36)+swing*.035+(p.altitude>0?.045:0);
-      h.position.z=(i?-.57:-.61)+swing*.045+(p.boosting?.035:0);
-      h.rotation.x=swing*.12;h.rotation.z=sign*-.16+swing*.04;
-    });
+    if(game.mode==='foot'&&game.status==='playing'){
+      const step=clamp(dt,0,.1),blend=1-Math.exp(-step*10),speed=Math.abs(p.speed);
+      gaitWeight+=(clamp(speed/4.9,0,1)-gaitWeight)*blend;
+      sprintWeight+=(clamp((speed-4.9)/3.3,0,1)-sprintWeight)*blend;
+      airWeight+=((p.altitude>.03?1:0)-airWeight)*blend;
+      const lateral=p.vx*Math.cos(p.yaw)-p.vz*Math.sin(p.yaw);
+      strafe+=(clamp(lateral/8.2,-1,1)-strafe)*blend;
+      const yawRate=step>0?angleDifference(lastLook,p.yaw)/step:0;lastLook=p.yaw;
+      lookLag+=(clamp(yawRate*.025,-.045,.045)-lookLag)*blend;
+      // Continuous phase: changing speed never jumps to a different wall-clock sine.
+      gaitPhase=(gaitPhase+step*(5.6+sprintWeight*2.6)*gaitWeight*(1-airWeight))%(Math.PI*2);
+      const movement=reduced?0:gaitWeight*(1-airWeight*.85);
+      for(const {side,shoulder,elbow,wrist} of footArms){
+        const phase=gaitPhase+(side>0?Math.PI:0),swing=Math.sin(phase),follow=Math.sin(phase-.45);
+        shoulder.rotation.set(swing*(.14+sprintWeight*.1)*movement,side*.06+(reduced?0:lookLag),-side*(.025+sprintWeight*.07));
+        shoulder.position.x=side*(.43-sprintWeight*.035)-(reduced?0:strafe*.014);
+        shoulder.position.y=-.22+airWeight*.025-(reduced?0:p.landing*.012);
+        elbow.rotation.x=-.74+gaitWeight*.2+sprintWeight*.2+airWeight*.15+Math.max(0,follow)*.065*movement;
+        wrist.rotation.set(-.07+follow*.035*movement,side*.12,-side*(.5+sprintWeight*.12)+follow*.025*movement);
+      }
+      motion.bob=reduced?0:(Math.cos(gaitPhase*2)-1)*(.004+sprintWeight*.003)*movement;
+      motion.roll=reduced?0:Math.sin(gaitPhase)*.0018*movement;
+    }
     bar.rotation.y=steer;bike.rotation.z=reduced?0:steer*.18;
     bike.position.y=reduced?0:Math.sin(time*28)*moving*.003;
     wheelTurn.rotation.z=steer*1.8;neutral.visible=Math.abs(p.speed)<.15;
     for(const [dial,value] of [[bikeSpeed,Math.abs(p.speed)*3.6],[armorSpeed,Math.abs(p.speed)*3.6],[armorPower,p.energy]])dial.needle.rotation.z=Math.PI*1.25-clamp(value/dial.max,0,1)*Math.PI*1.5;
   }
-  return {update,destroy(){
+  return {update,motion,destroy(){
     const geometries=new Set(),materials=new Set();for(const group of [root,vehicle])group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});
     geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());root.removeFromParent();vehicle.removeFromParent();
   }};
