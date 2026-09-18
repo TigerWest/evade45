@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import {BUILDINGS,OBSTACLES,MODES,seededRandom,clamp,angleDifference} from './engine.js';
+import {createCockpit} from './cockpit.js';
+import {BUILDINGS,OBSTACLES,seededRandom,clamp} from './engine.js';
 
 const rand=seededRandom(923);
 function noiseLayer(size){const values=Float32Array.from({length:size*size},()=>rand()-.5);return(x,y)=>{const xx=x/512*(size-1),yy=y/512*(size-1),ix=Math.floor(xx),iy=Math.floor(yy),fx=xx-ix,fy=yy-iy;const a=values[iy*size+ix]*(1-fx)+values[iy*size+ix+1]*fx;const b=values[(iy+1)*size+ix]*(1-fx)+values[(iy+1)*size+ix+1]*fx;return a*(1-fy)+b*fy}}
@@ -104,21 +105,7 @@ export function createRenderer(canvas){
   const smoke=[];for(const [x,z] of [[-38,-36],[29,-53],[63,38]])for(let i=0;i<12;i++){const material=new THREE.SpriteMaterial({map:dustMap,color:0x444943,transparent:true,opacity:.22,depthWrite:false});const sprite=new THREE.Sprite(material);scene.add(sprite);smoke.push({sprite,x,z,phase:i/12,seed:rand()*8})}
   const dustGeometry=new THREE.BufferGeometry(),dustPositions=new Float32Array(450*3);for(let i=0;i<450;i++){dustPositions[i*3]=(rand()-.5)*140;dustPositions[i*3+1]=rand()*12;dustPositions[i*3+2]=(rand()-.5)*140}dustGeometry.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));const dust=new THREE.Points(dustGeometry,new THREE.PointsMaterial({color:0xe4d5ac,size:.05,transparent:true,opacity:.42,depthWrite:false}));scene.add(dust);
 
-  // The player sees physical handlebars / vehicle hull, or unarmed hands.
-  const cockpit=new THREE.Group();camera.add(cockpit);const handsMat=new THREE.MeshStandardMaterial({color:0x8c795c,roughness:1});const sleeveMat=new THREE.MeshStandardMaterial({color:0x414a36,roughness:1});const cockpitMat=new THREE.MeshStandardMaterial({color:0x3d4936,roughness:.8,metalness:.25});
-  const footView=new THREE.Group(),bikeView=new THREE.Group(),armorView=new THREE.Group();cockpit.add(footView,bikeView,armorView);
-  function arm(group,side,handY,handZ){cylinder(group,[side*.38,-.73,-.12],[side*.29,handY,handZ],.079,sleeveMat,.062);const hand=new THREE.Mesh(new THREE.SphereGeometry(.075,9,8),handsMat);hand.scale.set(.8,1,1.4);hand.position.set(side*.29,handY,handZ);group.add(hand)}
-  arm(footView,-1,-.35,-.62);arm(footView,1,-.37,-.57);
-  cylinder(bikeView,[-.48,-.42,-.65],[.48,-.42,-.65],.021,metal);cylinder(bikeView,[0,-.65,-.85],[0,-.43,-.65],.035,metal);
-  box(bikeView,0,-.71,-.8,.3,.25,.6,cockpitMat);
-  for(const side of [-1,1]){cylinder(bikeView,[side*.3,-.42,-.65],[side*.5,-.42,-.61],.034,dark);arm(bikeView,side,-.39,-.62);cylinder(bikeView,[side*.38,-.4,-.66],[side*.5,-.16,-.8],.009,metal);box(bikeView,side*.5,-.15,-.8,.15,.09,.025,dark)}
-  const gauge=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.035,24),dark);gauge.rotation.x=Math.PI/2-.4;gauge.position.set(0,-.4,-.72);bikeView.add(gauge);
-  const dial=new THREE.Mesh(new THREE.CircleGeometry(.055,24),new THREE.MeshBasicMaterial({color:0xa5ac91}));dial.position.set(0,-.385,-.697);dial.rotation.x=-.4;bikeView.add(dial);
-  box(armorView,0,-.65,-1.25,3.8,.45,2.8,cockpitMat);box(armorView,0,-.43,-2.2,3.7,.08,1,cockpitMat);
-  for(const side of [-1,1]){box(armorView,side*.94,.07,-1.06,.12,1.4,.16,cockpitMat);box(armorView,side*1.5,-.23,-1.4,.3,.2,2,cockpitMat)}
-  box(armorView,0,.61,-1.05,2.1,.2,.22,cockpitMat);box(armorView,0,-.48,-.76,1.8,.2,.16,dark);
-  const steering=new THREE.Mesh(new THREE.TorusGeometry(.19,.022,7,24,Math.PI*1.6),metal);steering.position.set(0,-.55,-.6);steering.rotation.x=-.35;armorView.add(steering);
-  for(let i=0;i<5;i++)box(armorView,-.6+i*.14,-.37,-.8,.055,.04,.015,new THREE.MeshBasicMaterial({color:i===0?0xbca267:0x4b5b42}));
+  const cockpit=createCockpit(camera);
   const droneMaterial=new THREE.MeshStandardMaterial({color:0x202925,metalness:.55,roughness:.55});const droneMeshes=new Map();
   function makeDrone(){
     const root=new THREE.Group();const g=new THREE.Group();root.add(g);const rotors=[];
@@ -137,17 +124,17 @@ export function createRenderer(canvas){
   const burstMeshes=[];const sparkGeo=new THREE.IcosahedronGeometry(.1,0);const sparkMat=new THREE.MeshBasicMaterial({color:0xffbe72});
   for(let i=0;i<36;i++){const mesh=new THREE.Mesh(sparkGeo,sparkMat);mesh.visible=false;scene.add(mesh);burstMeshes.push(mesh)}
   const flash=new THREE.PointLight(0xffa04d,0,18,2);scene.add(flash);
-  let activeMode='',fov=76,lastDamage=0,lastPass=0,shake=0;
+  let fov=76,lastDamage=0,lastPass=0,shake=0;
   const flightQuaternion=new THREE.Quaternion(),flightEuler=new THREE.Euler(0,0,0,'YXZ');
   const resize=()=>{const width=canvas.clientWidth,height=canvas.clientHeight;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix()};const observer=new ResizeObserver(resize);observer.observe(canvas);resize();
   function render(game,time,dt=.016,reduced=false){
     const p=game.player;const menu=game.status==='ready';
-    if(activeMode!==game.mode){footView.visible=game.mode==='foot';bikeView.visible=game.mode==='bike';armorView.visible=game.mode==='armor';activeMode=game.mode}
+    cockpit.update(game,time,dt,reduced);
     if(menu){
-      camera.position.set(3.8+Math.sin(time*.07)*.5,2.3,26);camera.lookAt(-5,3.5,-20);cockpit.visible=false;
+      camera.position.set(3.8+Math.sin(time*.07)*.5,2.3,26);camera.lookAt(-5,3.5,-20);
       showcase.root.visible=true;showcase.root.position.set(1.1+Math.sin(time*.6)*.7,6.9+Math.sin(time*1.3)*.14,12);showcase.g.rotation.set(.1,Math.PI*.65+Math.sin(time*.3)*.2,.05);showcase.rotors.forEach((r,i)=>r.rotation.y=time*(i%2?120:-120));
     }else{
-      showcase.root.visible=false;cockpit.visible=true;
+      showcase.root.visible=false;
       const moving=Math.min(1,Math.abs(p.speed)/4),frequency=game.mode==='foot'?(p.boosting?15:10):22;
       const bob=reduced?0:Math.sin(time*frequency)*(game.mode==='foot'?.035:.013)*moving;
       if(game.damageCount!==lastDamage){shake=.22;lastDamage=game.damageCount}if(game.passCount!==lastPass){shake=Math.max(shake,.055);lastPass=game.passCount}shake=Math.max(0,shake-dt*.5);
@@ -155,9 +142,7 @@ export function createRenderer(canvas){
       camera.position.set(p.x+(reduced?0:Math.sin(time*73)*shake),p.y+bob-fall-(reduced?0:p.landing*.2),p.z+(reduced?0:Math.cos(time*61)*shake));
       camera.rotation.set(p.pitch+(reduced?0:Math.sin(time*61)*shake*.12),p.yaw,game.status==='lost'?.3:reduced?0:Math.sin(time*frequency*.5)*.007*moving,'YXZ');
       const targetFov=game.mode==='armor'?65:p.boosting?84:76;fov+=(targetFov-fov)*Math.min(dt*4,1);if(Math.abs(camera.fov-fov)>.05){camera.fov=fov;camera.updateProjectionMatrix()}
-      cockpit.position.y=bob*.4;cockpit.rotation.y=game.mode==='foot'?0:clamp(angleDifference(p.bodyYaw,p.yaw),-1.4,1.4);cockpit.rotation.x=game.mode==='foot'?0:-p.pitch;
-      footView.rotation.z=reduced?0:Math.sin(time*frequency*.5)*.035*moving;footView.position.z=p.boosting?.07:0;footView.position.y=p.altitude>0?.08:0;
-      bikeView.rotation.z=reduced?0:clamp(angleDifference(p.bodyYaw,p.yaw),-.1,.1);
+
     }
     const live=new Set();
     for(const d of game.drones){live.add(d.id);let model=droneMeshes.get(d.id);if(!model){model=makeDrone();droneMeshes.set(d.id,model)}model.root.position.set(d.x,d.y,d.z);const yaw=Math.atan2(-d.vx,-d.vz),speed=Math.hypot(d.vx,d.vy,d.vz),pitch=Math.atan2(d.vy,Math.hypot(d.vx,d.vz))-.18-speed*.006;flightEuler.set(pitch,yaw,d.roll||0,'YXZ');flightQuaternion.setFromEuler(flightEuler);model.g.quaternion.slerp(flightQuaternion,1-Math.exp(-dt*15));model.rotors.forEach((r,i)=>r.rotation.y=time*(i%2?1:-1)*(140+speed*3))}
@@ -171,5 +156,5 @@ export function createRenderer(canvas){
     dust.position.x=Math.sin(time*.015)*5;dust.position.z=Math.cos(time*.011)*5;
     renderer.render(scene,camera);
   }
-  return {render,renderer,camera,scene,destroy(){observer.disconnect();renderer.dispose()}};
+  return {render,renderer,camera,scene,destroy(){observer.disconnect();cockpit.destroy();renderer.dispose()}};
 }

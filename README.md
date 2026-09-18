@@ -35,11 +35,13 @@ http://127.0.0.1:5173 에 접속합니다. Node.js 20 이상과 Python 3이 필�
 ## 구성
 
 - `dist/engine.js`: 이동, 차량 관성, 3D 드론 추적·급강하, 충돌 및 생존 판정
-- `dist/render.js`: Three.js 전장, 광원·안개·그림자, 1인칭 손과 조종석
+- `dist/render.js`: Three.js 전장, 광원·안개·그림자
+- `dist/cockpit.js`: 손가락·관절·반장갑·소매, 오토바이 조종석·360도 경장갑차 실내, 차체와 독립된 시선, 주행에 연동되는 계기 바늘·조향·손 움직임
 - `dist/audio.js`: Web Audio 방향음과 효과음
 - `dist/i18n.js`: 한국어·영어 문구, 언어 결정 및 화면 번역
 - `dist/game.js`: 키보드·포인터·터치 입력, 일시정지 및 UI 상태
 - `tests/engine.test.js`: 게임 동작 검증
+- `tests/cockpit.test.js`: 시선 회전과 차체 좌표 분리, 차량 실내 구조·가시성·정리 검증
 - `tests/i18n.test.js`: 번역 누락·변수 일치, 언어 결정, 화면 번역 검증
 - `scripts/build.mjs`: Three.js 배포 모듈과 라이선스 로컬 복사 및 파일 검증
 
