@@ -47,13 +47,38 @@ function hit(game,reason){
   game.player.health--;game.damageCount++;game.player.invulnerable=2;game.lastHit=reason;
   if(game.player.health<=0)game.status='lost';
 }
+function clearApproach(x,y,z,tx,ty,tz){
+  // Segment versus padded boxes, including roof height. Only used to choose a
+  // game spawn corridor; airborne drones retain their normal physical collisions.
+  return !OBSTACLES.some(b=>{
+    let enter=0,leave=1;
+    const axes=[[x,tx-x,b.x-b.w/2-.28,b.x+b.w/2+.28],
+      [y,ty-y,-.28,b.h+.28],[z,tz-z,b.z-b.d/2-.28,b.z+b.d/2+.28]];
+    for(const [origin,delta,min,max] of axes){
+      if(Math.abs(delta)<1e-9){if(origin<min||origin>max)return false;continue}
+      const a=(min-origin)/delta,c=(max-origin)/delta;
+      enter=Math.max(enter,Math.min(a,c));leave=Math.min(leave,Math.max(a,c));
+      if(enter>leave)return false;
+    }
+    return true;
+  });
+}
 function spawnDrone(g){
   const p=g.player,diff=DIFFICULTIES[g.difficulty],first=g.nextId===1;
   const angle=first?p.yaw+.16:p.yaw+(g.random()-.5)*Math.PI*2;
   const range=first?76:70+g.random()*24;
-  const x=p.x-Math.sin(angle)*range,z=p.z-Math.cos(angle)*range,y=5+g.random()*4;
-  const dx=p.x-x,dy=.95-y,dz=p.z-z,length=Math.hypot(dx,dy,dz),speed=diff.speed*.82;
-  g.drones.push({id:g.nextId++,x,y,z,vx:dx/length*speed,vy:dy/length*speed,vz:dz/length*speed,age:0,phase:'approach',roll:0,pitch:0,closest:Infinity,passed:false});
+  const y=5+g.random()*4,ty=p.altitude+(g.mode==='armor'?1.35:.85);
+  // Search nearby directions first; keep range, altitude and speed unchanged.
+  // If no corridor exists, retry later rather than spawn inside scenery.
+  for(let i=0;i<48;i++){
+    const offset=Math.ceil(i/2)*(i%2?1:-1)*Math.PI/24;
+    const x=p.x-Math.sin(angle+offset)*range,z=p.z-Math.cos(angle+offset)*range;
+    if(!clearApproach(x,y,z,p.x,ty,p.z)||!clearApproach(x,y,z,p.x+p.vx*.25,ty,p.z+p.vz*.25))continue;
+    const dx=p.x-x,dy=ty-y,dz=p.z-z,length=Math.hypot(dx,dy,dz),speed=diff.speed*.82;
+    g.drones.push({id:g.nextId++,x,y,z,vx:dx/length*speed,vy:dy/length*speed,vz:dz/length*speed,age:0,phase:'approach',roll:0,pitch:0,closest:Infinity,passed:false});
+    return true;
+  }
+  return false;
 }
 function explode(g,d,hitPlayer){
   g.explosions.push({x:d.x,y:Math.max(.3,d.y),z:d.z,age:0,seed:d.id});d.phase='dead';
@@ -126,7 +151,10 @@ function simulate(g,input,dt){
   const moved=Math.hypot(p.x-oldX,p.z-oldZ);g.distance+=moved;
   if(g.mode==='foot')p.speed=moved/dt;
   g.boundary=Math.abs(p.x)>WORLD_LIMIT-4||Math.abs(p.z)>WORLD_LIMIT-4;
-  if(g.elapsed>=g.nextDrone){if(g.drones.length<diff.max)spawnDrone(g);g.nextDrone+=diff.interval*(1-g.elapsed/DURATION*.25)}
+  if(g.elapsed>=g.nextDrone){
+    const blocked=g.drones.length<diff.max&&!spawnDrone(g);
+    g.nextDrone=blocked?g.elapsed+.5:g.nextDrone+diff.interval*(1-g.elapsed/DURATION*.25);
+  }
   g.nearest=Infinity;g.threat=0;
   for(const d of g.drones){
     d.age+=dt;

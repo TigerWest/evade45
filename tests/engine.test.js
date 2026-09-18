@@ -29,3 +29,44 @@ test('buildings block movement and world limits contain players',()=>{const g=no
 test('15 Hz and 120 Hz frames preserve time and movement',()=>{const slow=noEnemies(playing()),fast=noEnemies(playing());advance(slow,8,{forward:1},15);advance(fast,8,{forward:1},120);assert.ok(Math.abs(slow.elapsed-fast.elapsed)<1e-9);assert.ok(Math.abs(slow.player.z-fast.player.z)<1e-7)});
 test('bad deltas are ignored and stalls bounded',()=>{assert.throws(()=>createGame('jet'));const g=playing();stepGame(g,still,Infinity);stepGame(g,still,-1);assert.equal(g.elapsed,0);stepGame(g,still,5);assert.ok(Math.abs(g.elapsed-.25)<1e-9)});
 test('practice still has a viable survival path',()=>{const g=playing('foot','easy');for(let i=0;i<46*120&&g.status==='playing';i++){g.player.yaw=-i/120*.7;stepGame(g,{forward:1},1/120)}assert.equal(g.status,'won');assert.ok(g.dodges>=4)});
+
+test('spawned approaches reach an exposed stationary player from every viewing direction',()=>{
+  for(const difficulty of Object.keys(DIFFICULTIES))for(const mode of Object.keys(MODES))for(let angle=0;angle<24;angle++){
+    const g=playing(mode,difficulty);g.player.yaw=angle*Math.PI/12;g.nextDrone=0;
+    stepGame(g,still,1/120);g.nextDrone=Infinity;
+    assert.equal(g.drones.length,1);
+    advance(g,8);
+    assert.equal(g.damageCount,1,`${mode}/${difficulty}, view ${angle*15} degrees: drone crashed before arrival`);
+  }
+});
+
+test('later random spawns also have open approaches near buildings and map edges',()=>{
+  for(const [x,z] of [[0,24],[-11,-12],[9,-26],[25,22],[-24,45],[74,-70],[-74,70]])for(let seed=1;seed<=24;seed++){
+    const g=createGame('foot','normal',seed);g.status='playing';Object.assign(g.player,{x,z});g.nextId=2;g.nextDrone=0;
+    stepGame(g,still,1/120);g.nextDrone=Infinity;
+    assert.equal(g.drones.length,1,`spawn at ${x},${z}, seed ${seed}`);
+    advance(g,8);
+    assert.equal(g.damageCount,1,`arrival at ${x},${z}, seed ${seed}`);
+  }
+});
+
+test('a drone still collides with cover after launch',()=>{
+  const g=noEnemies(playing());g.player.x=-19;g.player.z=4;
+  const d=incoming(g,{z:-22,y:3});g.drones.push(d);
+  advance(g,.4);
+  assert.equal(d.phase,'dead');assert.equal(g.damageCount,0);
+  assert.ok(g.explosions.length>0);
+});
+
+test('blocked spawn corridors retry promptly without creating drones inside scenery',()=>{
+  const g=playing(),count=OBSTACLES.length;g.nextDrone=0;
+  try{
+    OBSTACLES.push({x:-3,z:24,w:1,d:7,h:20},{x:3,z:24,w:1,d:7,h:20},
+      {x:0,z:21,w:7,d:1,h:20},{x:0,z:27,w:7,d:1,h:20});
+    advance(g,.1);
+    assert.equal(g.drones.length,0);assert.equal(g.nextId,1);assert.equal(g.dodges,0);
+    assert.ok(g.nextDrone>g.elapsed&&g.nextDrone<g.elapsed+.5);
+  }finally{OBSTACLES.splice(count)}
+  advance(g,.5);
+  assert.equal(g.drones.length,1);assert.equal(g.nextId,2);
+});
