@@ -3,16 +3,16 @@ export const WORLD_LIMIT = 78;
 export const PHYSICS_STEP = 1 / 120;
 export const JUMP = {speed:5.1,gravity:13.5,cost:18,cooldown:.95};
 export const MODES = {
-  foot: { name:'도보', label:'ON FOOT', speed:4.9, boost:8.2, response:12, radius:.38, health:1, eye:1.68 },
-  bike: { name:'오토바이', label:'MOTORCYCLE', speed:13, boost:23, response:1.8, radius:.85, health:1, eye:1.48 },
-  armor: { name:'경장갑차', label:'LIGHT ARMOR', speed:8.6, boost:13.6, response:1.15, radius:1.4, health:2, eye:2.25 },
+  foot: { speed:4.9, boost:8.2, response:12, radius:.38, health:1, eye:1.68 },
+  bike: { speed:13, boost:23, response:1.8, radius:.85, health:1, eye:1.48 },
+  armor: { speed:8.6, boost:13.6, response:1.15, radius:1.4, health:2, eye:2.25 },
 };
 // Only top speeds reference published civilian specifications. Steering, spawn,
 // player movement, collision volumes, and commitment distances are game assumptions.
 export const DIFFICULTIES = {
-  easy:{name:'연습',speed:16,acceleration:10,turnAcceleration:18,commitDistance:14,interval:8,max:2,source:'Avata 2 / Sport'},
-  normal:{name:'실전 압박',speed:27,acceleration:14,turnAcceleration:32,commitDistance:11,interval:5.6,max:3,source:'Avata 2 / Manual'},
-  hard:{name:'극한',speed:140/3.6,acceleration:14,turnAcceleration:42,commitDistance:8,interval:4.2,max:4,source:'DJI FPV / max'},
+  easy:{speed:16,acceleration:10,turnAcceleration:18,commitDistance:14,interval:8,max:2,source:'Avata 2 / Sport'},
+  normal:{speed:27,acceleration:14,turnAcceleration:32,commitDistance:11,interval:5.6,max:3,source:'Avata 2 / Manual'},
+  hard:{speed:140/3.6,acceleration:14,turnAcceleration:42,commitDistance:8,interval:4.2,max:4,source:'DJI FPV / max'},
 };
 export const BUILDINGS = [
   {x:-19,z:-12,w:13,d:10,h:7,kind:'house'},

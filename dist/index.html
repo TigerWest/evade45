@@ -4,37 +4,95 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151b1b">
-  <meta name="description" content="하늘에서 들려오는 모터 소리. 도보, 오토바이, 경장갑차의 1인칭 시점으로 45초간 드론을 피하는 3D 생존 게임.">
-  <title>DEAD AIR · 1인칭 드론 생존 체험</title>
+  <meta name="description" data-i18n-content="page.description" content="도보, 오토바이, 경장갑차로 45초 동안 드론을 피하는 1인칭 3D 게임입니다.">
+  <title data-i18n="page.title">DEAD AIR · 3D 드론 회피 게임</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23111412'/%3E%3Cpath d='M7 7h7v3h-4v4H7zm11 0h7v7h-3v-4h-4zM7 18h3v4h4v3H7zm15 0h3v7h-7v-3h4z' fill='%23fa7950'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <main id="experience">
-    <canvas id="world" tabindex="0" aria-label="1인칭 3D 전장. WASD로 이동하고 마우스로 시선을 돌립니다."></canvas>
+    <canvas id="world" tabindex="0" data-i18n-aria="world.label" aria-label="1인칭 3D 게임 화면. WASD로 이동하고 마우스로 시선을 돌립니다."></canvas>
     <div class="vignette" aria-hidden="true"></div><div id="damage-flash" aria-hidden="true"></div><div id="pass-flash" aria-hidden="true"></div>
-    <div id="loading"><span class="loading-brand">DEAD AIR</span><p id="loading-text">전장에 진입하는 중</p><div class="loading-line"></div></div>
-    <header class="topbar"><a class="brand" href="./"><span class="brand-cross">⌖</span> DEAD AIR<span class="brand-small">FIRST PERSON EXPERIENCE</span></a><div class="header-right"><span class="live-label"><i></i> 3D SURVIVAL</span><button id="audio-button" aria-pressed="true" aria-label="소리 끄기">SOUND ON</button><button id="help-button" aria-label="조작 방법 열기">조작 방법 <span>↗</span></button><button id="pause-button" aria-label="일시정지" hidden>Ⅱ</button></div></header>
+    <div id="loading"><span class="loading-brand">DEAD AIR</span><p id="loading-text" data-i18n="loading">게임을 불러오는 중…</p><div class="loading-line"></div></div>
+    <header class="topbar">
+      <a class="brand" href="./"><span class="brand-cross">⌖</span> DEAD AIR<span class="brand-small" data-i18n="brand.subtitle">1인칭 3D 생존 게임</span></a>
+      <div class="header-right">
+        <span class="live-label"><i></i><span data-i18n="header.live">45초 생존</span></span>
+        <select id="language-select" data-i18n-aria="language.label" aria-label="언어 선택"><option value="ko" lang="ko">한국어</option><option value="en" lang="en">English</option></select>
+        <button id="audio-button" aria-pressed="true" data-i18n="audio.on" data-i18n-aria="audio.mute" aria-label="소리 끄기">소리 켜짐</button>
+        <button id="help-button" data-i18n-aria="help.openLabel" aria-label="조작 방법 열기"><span class="button-label" data-i18n="help.open">조작 방법</span><span aria-hidden="true">↗</span></button>
+        <button id="pause-button" data-i18n-aria="pause.label" hidden aria-label="일시정지">Ⅱ</button>
+      </div>
+    </header>
     <section id="menu" class="menu">
-      <div class="intro"><div class="eyebrow"><span></span> 살아남을 시간, 45초</div><h1>소리가 들리면,<br>이미 가까이 있습니다.</h1><p>하늘을 올려다볼 여유조차 없는 순간.<br>이제 당신의 시점에서 마주하세요.</p><div class="audio-note"><span>◖</span> 헤드폰을 착용하면 접근 방향과 거리감이 더 선명해집니다.</div></div>
-      <div class="launch-panel"><div class="loadout-heading"><h2>어떤 상태로 마주하시겠습니까?</h2><span>SELECT YOUR PERSPECTIVE</span></div><div class="loadouts" role="group" aria-label="이동 수단 선택"><button data-mode="foot" class="selected" aria-pressed="true"><span class="loadout-num">01</span><div><strong>도보</strong><small>몸 하나로 버티기</small></div><span class="check">✓</span></button><button data-mode="bike" aria-pressed="false"><span class="loadout-num">02</span><div><strong>오토바이</strong><small>속도를 믿고 달리기</small></div><span class="check"></span></button><button data-mode="armor" aria-pressed="false"><span class="loadout-num">03</span><div><strong>경장갑차</strong><small>장갑 안에서 버티기</small></div><span class="check"></span></button></div><div class="launch-bottom"><div class="difficulty-wrap"><span>위협 수준</span><div class="difficulty" role="group" aria-label="위협 수준"><button data-difficulty="easy" aria-pressed="false">연습</button><button data-difficulty="normal" class="selected" aria-pressed="true">실전 압박</button><button data-difficulty="hard" aria-pressed="false">극한</button></div></div><button id="start-button" class="primary-button">전장 진입 <span>↗</span></button></div><div class="flight-spec"><span id="flight-spec">최고 97 km/h · Avata 2 / Manual 속도 참고</span><button id="specs-button">기준과 가정 ↗</button></div><p class="entry-note" id="entry-note">WASD 이동 · 마우스 시선 · SHIFT 질주 · SPACE 점프 · ESC 일시정지</p></div>
-      <div class="scene-label"><span>ABANDONED OUTSKIRTS</span><b>폐허가 된 외곽 마을</b><small>시야는 제한적입니다.<br>소리는 시야 밖에서도 다가옵니다.</small></div>
-      <footer><span>가상의 3D 체험입니다. 실제 장비 성능이나 생존 가능성을 재현하지 않습니다.</span><span>NO WEAPONS. JUST SURVIVAL.</span></footer>
+      <div class="intro">
+        <div class="eyebrow"><i></i><span data-i18n="intro.kicker">목표: 45초 동안 드론 피하기</span></div>
+        <h1 data-i18n="intro.title">드론을 피해
+45초를 버티세요.</h1><p data-i18n="intro.description">이동 수단과 난이도를 선택하세요.
+드론의 접근 방향을 살피며 이동하세요.</p>
+        <div class="audio-note"><span aria-hidden="true">◖</span><span data-i18n="intro.audio">헤드폰을 사용하면 드론이 다가오는 방향을 듣기 쉽습니다.</span></div>
+      </div>
+      <div class="launch-panel">
+        <div class="loadout-heading"><h2 data-i18n="setup.title">이동 수단 선택</h2><span data-i18n="setup.subtitle">이동 방식과 피격 조건이 달라집니다</span></div>
+        <div class="loadouts" role="group" data-i18n-aria="setup.title" aria-label="이동 수단 선택">
+          <button data-mode="foot" class="selected" aria-pressed="true"><span class="loadout-num">01</span><div><strong data-i18n="mode.foot">도보</strong><small data-i18n="mode.foot.description">질주와 점프 가능</small></div><span class="check">✓</span></button>
+          <button data-mode="bike" aria-pressed="false"><span class="loadout-num">02</span><div><strong data-i18n="mode.bike">오토바이</strong><small data-i18n="mode.bike.description">빠른 이동 · 점프 불가</small></div><span class="check"></span></button>
+          <button data-mode="armor" aria-pressed="false"><span class="loadout-num">03</span><div><strong data-i18n="mode.armor">경장갑차</strong><small data-i18n="mode.armor.description">2회 피격 시 종료</small></div><span class="check"></span></button>
+        </div>
+        <div class="launch-bottom">
+          <div class="difficulty-wrap"><span data-i18n="difficulty.label">난이도</span><div class="difficulty" role="group" data-i18n-aria="difficulty.label" aria-label="난이도">
+            <button data-difficulty="easy" aria-pressed="false" data-i18n="difficulty.easy">연습</button><button data-difficulty="normal" class="selected" aria-pressed="true" data-i18n="difficulty.normal">보통</button><button data-difficulty="hard" aria-pressed="false" data-i18n="difficulty.hard">어려움</button>
+          </div></div>
+          <button id="start-button" class="primary-button"><span class="button-label" data-i18n="start">게임 시작</span><span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="flight-spec"><span id="flight-spec"></span><button id="specs-button" data-i18n="spec.open">속도 기준과 게임 설정</button></div>
+        <p class="entry-note" id="entry-note"></p>
+      </div>
+      <div class="scene-label"><span data-i18n="scene.kicker">게임 장소</span><b data-i18n="scene.title">폐허가 된 외곽 마을</b><small data-i18n="scene.description">건물과 잔해가 길을 막습니다.
+시야 밖에서 접근하는 드론도 살펴보세요.</small></div>
+      <footer><span data-i18n="footer.note">가상의 게임입니다. 실제 장비 성능이나 생존 가능성을 재현하지 않습니다.</span><span data-i18n="footer.tagline">무기 없이 드론을 피하는 게임</span></footer>
     </section>
-    <section id="hud" hidden aria-label="게임 상태">
+    <section id="hud" hidden data-i18n-aria="hud.label" aria-label="게임 상태">
       <div class="compass"><span id="compass-left">NW</span><i></i><span id="compass">N</span><i></i><span id="compass-right">NE</span></div>
-      <div class="survival-clock"><span>SURVIVE</span><strong id="timer">45<small>.0</small></strong><span>SECONDS REMAINING</span></div>
-      <div class="threat-telemetry"><span>DRONE SPEED</span><b id="drone-speed">접근 대기</b></div><div id="crosshair" aria-hidden="true"><i></i></div>
-      <div id="warning"><span class="warning-bracket">[</span><div><span id="warning-label">주변을 경계하세요</span><small id="warning-sub">하늘에서 모터 소리가 들립니다</small></div><span class="warning-bracket">]</span></div>
-      <div class="bottom-hud"><div class="player-state"><span id="mode-label">ON FOOT</span><div class="energy-heading"><span id="energy-label">체력</span><b id="energy">100%</b></div><div class="energy-track"><i id="energy-fill"></i></div><small id="integrity">피격 허용 없음</small></div><div class="live-controls"><span id="control-hint">WASD 이동　SHIFT 질주　SPACE 점프</span><small>마우스 시선 · ESC 일시정지</small></div><div class="speedometer"><strong id="speed">0</strong><span>KM/H</span></div></div>
-      <div id="intro-toast">멈추지 마세요. 45초 동안 살아남으세요.</div><div id="look-hint" hidden>화면을 드래그하면 시선을 돌릴 수 있습니다.</div>
-      <div class="mobile-controls"><div id="joystick" aria-label="이동 조이스틱"><i id="joystick-knob"></i></div><div class="mobile-look-note">오른쪽 화면을 드래그해 둘러보기</div><div class="mobile-actions"><button id="jump-button" aria-label="도보 점프">점프<span>SPACE</span></button><button id="boost-button" aria-label="가속">가속</button></div></div>
+      <div class="survival-clock"><span data-i18n="hud.survive">남은 시간</span><strong id="timer">45<small>.0</small></strong><span data-i18n="hud.seconds">초</span></div>
+      <div class="threat-telemetry"><span data-i18n="hud.droneSpeed">가장 가까운 드론 속도</span><b id="drone-speed"></b></div><div id="crosshair" aria-hidden="true"><i></i></div>
+      <div id="warning"><span class="warning-bracket">[</span><div><span id="warning-label"></span><small id="warning-sub"></small></div><span class="warning-bracket">]</span></div>
+      <div class="bottom-hud">
+        <div class="player-state"><span id="mode-label"></span><div class="energy-heading"><span id="energy-label"></span><b id="energy">100%</b></div><div class="energy-track"><i id="energy-fill"></i></div><small id="integrity"></small></div>
+        <div class="live-controls"><span id="control-hint"></span><small data-i18n="controls.look">마우스 시선 · ESC 일시정지</small></div><div class="speedometer"><strong id="speed">0</strong><span>KM/H</span></div>
+      </div>
+      <div id="intro-toast" data-i18n="hud.intro">드론을 피해 45초 동안 살아남으세요.</div><div id="look-hint" hidden data-i18n="hud.dragLook">화면을 드래그하면 시선을 돌릴 수 있습니다.</div>
+      <div class="mobile-controls"><div id="joystick" data-i18n-aria="touch.joystick" aria-label="이동 조이스틱"><i id="joystick-knob"></i></div><div class="mobile-look-note" data-i18n="touch.look">오른쪽 화면을 드래그해 둘러보기</div><div class="mobile-actions"><button id="jump-button" data-i18n-aria="touch.jumpLabel" aria-label="도보 점프"><span class="button-label" data-i18n="touch.jump">점프</span><span>SPACE</span></button><button id="boost-button" data-i18n="touch.boost" data-i18n-aria="touch.boost" aria-label="가속">가속</button></div></div>
     </section>
-    <section id="pause-screen" class="modal-screen" hidden><span class="eyebrow">SIMULATION PAUSED</span><h2>잠시 숨을 고르세요.</h2><p>다시 진입하면 마우스로 시선을 조작합니다.</p><button id="resume-button" class="primary-button">계속 플레이 <span>→</span></button><button id="quit-button" class="text-button">이동 수단 선택으로 돌아가기</button></section>
-    <section id="result-screen" class="modal-screen" hidden aria-live="polite"><span class="eyebrow" id="result-kicker">SIGNAL LOST</span><h2 id="result-title">소리가 멈췄습니다.</h2><p id="result-description">드론이 당신에게 도달했습니다.</p><div class="result-stats"><div><span>생존 시간</span><strong id="result-time">0.0<small>s</small></strong></div><div><span>회피한 드론</span><strong id="result-dodges">0</strong></div><div><span>이동 거리</span><strong id="result-distance">0<small>m</small></strong></div></div><div class="result-actions"><button id="retry-button" class="primary-button">다시 진입 <span>↗</span></button><button id="setup-button" class="secondary-button">이동 수단 변경</button></div><p class="result-reflection" id="result-reflection">화면 너머에서는 다시 시작할 수 없는 순간입니다.</p></section>
-    <div id="error-screen" class="modal-screen" hidden><span class="eyebrow">3D RENDERER UNAVAILABLE</span><h2>3D 화면을 시작하지 못했습니다.</h2><p id="error-message">브라우저의 하드웨어 가속을 켠 뒤 최신 Chrome 또는 Safari에서 다시 열어 주세요.</p><button id="reload-button" class="primary-button">다시 불러오기 <span>↻</span></button></div>
+    <section id="pause-screen" class="modal-screen" hidden>
+      <span class="eyebrow" data-i18n="pause.kicker">일시정지</span><h2 data-i18n="pause.title">게임을 일시정지했습니다.</h2><p data-i18n="pause.description">계속 플레이를 누르면 멈춘 지점에서 이어집니다.</p>
+      <button id="resume-button" class="primary-button"><span class="button-label" data-i18n="pause.resume">계속 플레이</span><span aria-hidden="true">→</span></button><button id="quit-button" class="text-button" data-i18n="pause.quit">처음 화면으로</button>
+    </section>
+    <section id="result-screen" class="modal-screen" hidden aria-live="polite">
+      <span class="eyebrow" id="result-kicker"></span><h2 id="result-title"></h2><p id="result-description"></p>
+      <div class="result-stats"><div><span data-i18n="result.time">생존 시간</span><strong id="result-time">0.0<small>s</small></strong></div><div><span data-i18n="result.dodges">피한 드론</span><strong id="result-dodges">0</strong></div><div><span data-i18n="result.distance">이동 거리</span><strong id="result-distance">0<small>m</small></strong></div></div>
+      <div class="result-actions"><button id="retry-button" class="primary-button"><span class="button-label" data-i18n="result.retry">다시 도전</span><span aria-hidden="true">↗</span></button><button id="setup-button" class="secondary-button" data-i18n="result.setup">설정 변경</button></div>
+      <p class="result-reflection" id="result-reflection" data-i18n="result.next">같은 조건으로 다시 도전하거나 이동 수단과 난이도를 바꿀 수 있습니다.</p>
+    </section>
+    <div id="error-screen" class="modal-screen" hidden><span class="eyebrow" data-i18n="error.kicker">3D 화면 오류</span><h2 data-i18n="error.title">3D 화면을 불러오지 못했습니다.</h2><p id="error-message" data-i18n="error.renderer">브라우저의 하드웨어 가속을 켠 뒤 최신 Chrome 또는 Safari에서 다시 열어 주세요.</p><button id="reload-button" class="primary-button"><span class="button-label" data-i18n="error.reload">다시 불러오기</span><span aria-hidden="true">↻</span></button></div>
   </main>
-  <dialog id="help-dialog"><div class="dialog-header"><span class="eyebrow">BEFORE YOU ENTER</span><button id="close-help" aria-label="설명 닫기">✕</button></div><h2>목표는 오직, 생존.</h2><p>지상 1인칭 시점에서 드론을 피해 45초를 버티세요. 무기는 없습니다.</p><dl><div><dt>W A S D</dt><dd>도보: 이동 / 차량: 전진·후진·조향</dd></div><div><dt>마우스</dt><dd>시선 이동. 하늘과 뒤쪽도 살펴볼 수 있습니다.</dd></div><div><dt>SHIFT</dt><dd>전력 질주 / 차량 가속. 에너지를 소모합니다.</dd></div><div><dt>SPACE</dt><dd>도보 점프. 이동 방향으로 뛰며 체력을 소모합니다.</dd></div><div><dt>ESC</dt><dd>일시정지 / 마우스 잠금 해제</dd></div><div><dt>방향키</dt><dd>마우스 대신 시선 이동</dd></div></dl><p class="help-detail">드론은 속도를 유지하며 연속 접근합니다. 정지해 조준하는 구간은 없습니다. 방향을 바꾸면 기체가 기울고, 빗나가면 관성대로 지나갑니다. 도보 점프는 높이가 변하는 물리 동작이며 무적 효과가 없습니다. 부딪히면 도보·오토바이는 즉시 실패하며, 경장갑차는 첫 피격을 버팁니다. 건물·차량·잔해는 이동을 막습니다. 경고와 소리가 위협을 알려 줍니다.</p><p class="help-detail">모바일은 왼쪽 조이스틱으로 이동하고 오른쪽 화면을 드래그해 시선을 돌립니다. 가속 버튼을 누르는 동안 속도가 올라갑니다. 도보에서는 점프 버튼으로 뛸 수 있습니다.</p><section class="spec-sources"><h3>속도 기준과 게임용 가정</h3><p><a href="https://www.dji.com/avata-2/specs" target="_blank" rel="noopener noreferrer">DJI Avata 2 공식 사양 ↗</a><br>스포츠 모드 16m/s, 수동 모드 27m/s. 무풍·해수면에 준하는 시험 조건이며 EU 수동 모드는 최대 19m/s입니다.</p><p><a href="https://www.dji.com/newsroom/news/dji-reinvents-the-drone-flying-experience-with-the-dji-fpv" target="_blank" rel="noopener noreferrer">DJI FPV 공식 발표 ↗</a><br>최고 약 140km/h. 극한 모드의 속도 상한 참고값입니다.</p><p>군용·개조 FPV의 통일된 사양이 아닙니다. 선회·추적·돌진 방식, 점프, 충돌 판정과 장갑은 게임용 가정입니다. 실제 기체에는 감속 능력이 있으며, 이 시나리오에서는 감속하지 않는 접근을 연출합니다. 실제 생존율이나 점프 회피의 효과를 검증한 시뮬레이션은 아닙니다.</p></section><label class="motion-option"><input id="motion-toggle" type="checkbox"> 카메라 흔들림 줄이기</label><button id="understood-button" class="primary-button">알겠습니다 <span>→</span></button></dialog>
+  <dialog id="help-dialog">
+    <div class="dialog-header"><span class="eyebrow" data-i18n="help.kicker">게임 안내</span><button id="close-help" data-i18n-aria="help.close" aria-label="설명 닫기">✕</button></div>
+    <h2 data-i18n="help.title">45초 동안 드론을 피하세요.</h2><p data-i18n="help.description">1인칭 시점에서 이동하며 드론을 피하는 게임입니다. 무기는 사용할 수 없습니다.</p>
+    <dl>
+      <div><dt>W A S D</dt><dd data-i18n="help.move">도보: 이동 / 차량: W·S 전후진, A·D 조향</dd></div><div><dt data-i18n="help.mouse">마우스</dt><dd data-i18n="help.look">시선을 돌립니다. 하늘과 뒤쪽도 볼 수 있습니다.</dd></div>
+      <div><dt>SHIFT</dt><dd data-i18n="help.boost">도보는 질주, 차량은 가속합니다. 체력 또는 가속 에너지를 소모합니다.</dd></div><div><dt>SPACE</dt><dd data-i18n="help.jump">도보에서만 점프합니다. 이동 중 누르면 해당 방향으로 뛰며 체력을 소모합니다.</dd></div>
+      <div><dt>ESC</dt><dd data-i18n="help.escape">일시정지하고 마우스 잠금을 해제합니다.</dd></div><div><dt data-i18n="help.arrows">방향키</dt><dd data-i18n="help.arrowLook">마우스 대신 시선을 돌립니다.</dd></div>
+    </dl>
+    <p class="help-detail" data-i18n="help.flight">드론은 감속하지 않고 접근하며, 빗나가면 진행 방향으로 지나갑니다. 점프 중에도 드론에 맞을 수 있습니다. 도보와 오토바이는 1회, 경장갑차는 2회 피격되면 게임이 끝납니다. 건물, 벽, 폐차는 이동을 막으며 드론도 부딪힐 수 있습니다.</p><p class="help-detail" data-i18n="help.mobile">모바일에서는 왼쪽 조이스틱으로 이동하고 오른쪽 화면을 드래그해 시선을 돌립니다. 가속 버튼은 누르는 동안 작동합니다. 점프 버튼은 도보에서만 사용할 수 있습니다.</p>
+    <section class="spec-sources"><h3 data-i18n="spec.title">속도 참고 자료와 게임 설정</h3>
+      <p><a href="https://www.dji.com/avata-2/specs" target="_blank" rel="noopener noreferrer" data-i18n="spec.avataLink">DJI Avata 2 공식 사양 ↗</a><br><span data-i18n="spec.avata">스포츠 모드 16m/s, 수동 모드 27m/s를 참고했습니다. 제조사 시험 조건은 무풍·해수면 기준이며, EU 수동 모드는 최대 19m/s입니다.</span></p>
+      <p><a href="https://www.dji.com/newsroom/news/dji-reinvents-the-drone-flying-experience-with-the-dji-fpv" target="_blank" rel="noopener noreferrer" data-i18n="spec.fpvLink">DJI FPV 공식 발표 ↗</a><br><span data-i18n="spec.fpv">최고 약 140km/h를 어려움 난이도의 속도 상한으로 사용합니다.</span></p>
+      <p data-i18n="spec.assumptions">민간 드론의 공개 최고 속도만 참고했습니다. 선회, 추적, 접근 방식, 점프, 충돌 판정과 장갑은 게임 설정입니다. 실제 드론도 감속할 수 있지만 이 게임에서는 감속하지 않고 접근합니다. 실제 전장 생존율이나 점프의 회피 효과를 검증한 시뮬레이션은 아닙니다.</p>
+    </section>
+    <label class="motion-option"><input id="motion-toggle" type="checkbox"><span data-i18n="help.reduceMotion">카메라 흔들림 줄이기</span></label>
+    <button id="understood-button" class="primary-button"><span class="button-label" data-i18n="help.done">닫기</span><span aria-hidden="true">→</span></button>
+  </dialog>
   <script type="module" src="./game.js"></script>
 </body>
 </html>

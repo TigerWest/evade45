@@ -7,3 +7,29 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* Flight reference and new physical jump controls. */
 .flight-spec{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;padding-top:12px;border-top:1px solid #d4dac32b;color:#c1cbbd;font-size:10px}.flight-spec button{font-size:10px;color:var(--accent);padding:4px;white-space:nowrap}.threat-telemetry{position:absolute;top:245px;left:4.3%;display:flex;flex-direction:column;gap:8px}.threat-telemetry>span{font:7px var(--mono);letter-spacing:2px;color:#ced1bd99}.threat-telemetry>b{font:13px var(--mono);color:#efbc94}#pass-flash{position:absolute;inset:0;pointer-events:none;z-index:7;opacity:0;box-shadow:inset 65px 0 80px -55px #ead5a3,inset -65px 0 80px -55px #ead5a3}.mobile-actions{display:flex;align-items:center;gap:12px;pointer-events:auto}#jump-button{width:66px;height:66px;border:1px solid #e3e5ba88;border-radius:50%;background:#a7b28a30;font-size:12px;color:#f0e7c8;touch-action:none}#jump-button span{display:block;font:7px var(--mono);margin-top:5px;color:#c0c8a8}.spec-sources{margin:25px 0;border-top:1px solid #b2c1993b;padding-top:14px}.spec-sources h3{font-size:14px;font-weight:600}.spec-sources p{font-size:12px;line-height:1.8}.spec-sources a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}@media(max-width:1100px){.threat-telemetry{top:208px}}@media(max-width:767px){.flight-spec{font-size:8px;margin-top:9px;padding-top:8px}.flight-spec button{font-size:8px}.threat-telemetry{left:22px;top:181px;gap:6px}.threat-telemetry>b{font-size:11px}.threat-telemetry>span{font-size:6px}.mobile-look-note{bottom:115px}.mobile-actions{gap:10px}#jump-button{width:61px;height:61px}.launch-panel{margin-top:20px}}@media(max-height:650px){.flight-spec{margin-top:7px;padding-top:5px}.entry-note{margin-top:7px}.intro h1{font-size:32px}.audio-note{display:none}}
+/* Translated copy uses text nodes; preserve line breaks and control typography. */
+.intro h1,.intro>p,.scene-label>small{white-space:pre-line}
+.eyebrow>span{width:auto;height:auto;background:none}
+.eyebrow>i{width:20px;height:1px;background:var(--accent);flex-shrink:0}
+.audio-note>span:last-child{font:inherit;color:inherit}
+button .button-label,#jump-button .button-label{font:inherit;line-height:inherit;color:inherit;margin:0}
+#language-select{font:11px var(--sans);color:var(--text);background:#172123;border:1px solid #a8b49855;border-radius:2px;padding:6px 4px;max-width:95px;cursor:pointer}
+#language-select:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.loadouts small{white-space:normal;line-height:1.5}
+.loadouts>button>div{min-width:0}
+.loadout-heading{gap:12px}.loadout-heading>span{text-align:right}
+.flight-spec>span{min-width:0;line-height:1.6}
+html[lang="en"] h1{letter-spacing:-1.8px;font-size:clamp(30px,4.2vw,60px)}
+html[lang="en"] .eyebrow{letter-spacing:1.4px}
+.menu{overflow-y:auto}.intro,.launch-panel{flex-shrink:0}
+@media(max-width:767px){
+  .topbar{padding:0 16px;gap:10px}.brand{font-size:18px;white-space:nowrap}.brand-cross{display:none}
+  .header-right{gap:10px}.header-right button{white-space:nowrap}#language-select{font-size:10px;max-width:76px}
+  .header-right #help-button>span:last-child{display:none}
+  .menu{justify-content:safe center;padding-top:95px;padding-bottom:24px}
+  .menu footer{position:static;margin-top:25px;flex-shrink:0}
+  html[lang="en"] h1{font-size:clamp(28px,7.4vw,44px);letter-spacing:-1px}
+  .flight-spec{align-items:flex-start}.flight-spec button{white-space:normal;max-width:110px;text-align:right}
+  .loadout-heading>span{max-width:45%}
+}
+@media(max-width:380px){.header-right{gap:7px}.brand{font-size:16px}.header-right #audio-button{font-size:7px}.launch-bottom{gap:8px}.difficulty{gap:9px}.primary-button{min-width:130px;padding:14px}.result-actions{flex-wrap:wrap;justify-content:center}.result-stats{gap:25px}}

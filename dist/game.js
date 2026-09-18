@@ -1,16 +1,35 @@
 import {createGame,stepGame,MODES,DIFFICULTIES,DURATION,clamp} from './engine.js';
 import {createAudio} from './audio.js';
+import {resolveLocale,translate,applyLocale} from './i18n.js';
 const $=id=>document.getElementById(id),canvas=$('world'),audio=createAudio();
 let mode='foot',difficulty='normal',game=createGame(),view,previous=performance.now(),uiTime=0,frameId,soundEnabled=true,dragPointer=null,dragX=0,dragY=0,hadLock=false;
+let savedLocale;try{savedLocale=localStorage.getItem('dead-air.locale')}catch{}
+let locale=resolveLocale(savedLocale,navigator.languages??[navigator.language]),audioUnavailable=false;
+const t=(key,values)=>translate(locale,key,values);
+applyLocale(document,locale);$('language-select').value=locale;
 let reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const coarse=matchMedia('(pointer:coarse)').matches,keys=new Set(),touch={forward:0,right:0,boost:false,jump:false};let stickPointer=null;
 $('motion-toggle').checked=reduced;
 function clearInput(){keys.clear();touch.forward=0;touch.right=0;touch.boost=false;touch.jump=false;dragPointer=null;stickPointer=null;$('joystick-knob').style.transform='translate(0,0)'}
-function inputDescription(){return coarse?'왼쪽 조이스틱 이동 · 오른쪽 드래그 시선 · 가속 / 도보 점프':mode==='foot'?'WASD 이동 · 마우스 시선 · SHIFT 질주 · SPACE 점프 · ESC 일시정지':'W/S 전진·후진 · A/D 조향 · 마우스 시선 · SHIFT 가속 · ESC 일시정지'}
+function inputDescription(){return t(coarse?'controls.touch':mode==='foot'?'controls.foot':'controls.vehicle')}
+function syncAudio(){
+  $('audio-button').textContent=t(audioUnavailable?'audio.unavailable':soundEnabled?'audio.on':'audio.off');
+  $('audio-button').setAttribute('aria-pressed',String(soundEnabled));
+  $('audio-button').setAttribute('aria-label',t(soundEnabled?'audio.mute':'audio.unmute'));
+}
 function sync(){
   $('menu').hidden=game.status!=='ready';$('hud').hidden=game.status!=='playing';$('pause-screen').hidden=game.status!=='paused';$('result-screen').hidden=!['lost','won'].includes(game.status);$('pause-button').hidden=game.status!=='playing';
-  $('mode-label').textContent=MODES[mode].label;$('energy-label').textContent=mode==='foot'?'체력':'가속 에너지';$('control-hint').textContent=mode==='foot'?'WASD 이동　SHIFT 질주　SPACE 점프':'W/S 전후진　A/D 조향　SHIFT 가속';$('entry-note').textContent=inputDescription();$('jump-button').hidden=mode!=='foot';$('flight-spec').textContent=`최고 ${Math.round(DIFFICULTIES[difficulty].speed*3.6)} km/h · ${DIFFICULTIES[difficulty].source} 속도 참고`;
+  $('mode-label').textContent=t(`mode.${mode}`);$('energy-label').textContent=t(mode==='foot'?'hud.stamina':'hud.boostEnergy');
+  $('control-hint').textContent=t(mode==='foot'?'controls.foot.short':'controls.vehicle.short');$('entry-note').textContent=inputDescription();$('jump-button').hidden=mode!=='foot';
+  $('flight-spec').textContent=t('spec.summary',{speed:Math.round(DIFFICULTIES[difficulty].speed*3.6),source:DIFFICULTIES[difficulty].source});
+  syncAudio();
 }
+function changeLanguage(value){
+  locale=resolveLocale(value);try{localStorage.setItem('dead-air.locale',locale)}catch{}
+  clearInput();applyLocale(document,locale);$('language-select').value=locale;sync();telemetry();
+  if(['lost','won'].includes(game.status))renderResult();
+}
+
 function selectMode(value){
   if(game.status!=='ready'||!MODES[value])return false;mode=value;game=createGame(mode,difficulty);document.querySelectorAll('[data-mode]').forEach(b=>{const selected=b.dataset.mode===mode;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));b.querySelector('.check').textContent=selected?'✓':''});sync();return true;
 }
@@ -21,29 +40,30 @@ function lockMouse(){
   if(!canvas.requestPointerLock){$('look-hint').hidden=false;return}
   try{const result=canvas.requestPointerLock();if(result?.catch)result.catch(()=>{hadLock=false;$('look-hint').hidden=false})}catch{$('look-hint').hidden=false}
 }
-async function enableAudio(){if(soundEnabled){const ok=await audio.unlock();if(!ok){soundEnabled=false;audio.setEnabled(false);$('audio-button').textContent='SOUND N/A';$('audio-button').setAttribute('aria-pressed','false')}}}
+async function enableAudio(){if(soundEnabled){const ok=await audio.unlock();audioUnavailable=!ok;if(!ok){soundEnabled=false;audio.setEnabled(false)}syncAudio()}}
 function start(lock=true){
   if(!view)return;clearInput();game=createGame(mode,difficulty);game.status='playing';previous=performance.now();$('damage-flash').style.opacity='0';sync();telemetry();canvas.focus({preventScroll:true});enableAudio();if(lock)lockMouse();
 }
-function pause(){if(game.status!=='playing')return;game.status='paused';clearInput();audio.suspend();releaseMouse();sync();$('resume-button').focus({preventScroll:true})}
+function pause(focusResume=true){if(game.status!=='playing')return;game.status='paused';clearInput();audio.suspend();releaseMouse();sync();if(focusResume)$('resume-button').focus({preventScroll:true})}
 function resume(){if(game.status!=='paused')return;clearInput();game.status='playing';previous=performance.now();sync();canvas.focus({preventScroll:true});enableAudio();lockMouse()}
 function setup(){clearInput();releaseMouse();audio.suspend();game=createGame(mode,difficulty);$('damage-flash').style.opacity='0';sync();$('start-button').focus({preventScroll:true})}
-function finish(){
-  clearInput();releaseMouse();audio.suspend();sync();const won=game.status==='won';
-  $('result-kicker').textContent=won?'SIGNAL ALIVE / SURVIVED':'SIGNAL LOST / '+MODES[mode].label;
-  $('result-title').textContent=won?'45초를 버텨냈습니다.':'소리가 멈췄습니다.';
-  $('result-description').textContent=won?`${MODES[mode].name} · ${DIFFICULTIES[difficulty].name}. 가까스로 살아남았습니다.`:`드론이 당신에게 도달했습니다. ${game.elapsed.toFixed(1)}초 만에 끝난 회피였습니다.`;
+function renderResult(){
+  const won=game.status==='won',values={mode:t(`mode.${mode}`),difficulty:t(`difficulty.${difficulty}`),time:game.elapsed.toFixed(1)};
+  $('result-kicker').textContent=t(won?'result.wonKicker':'result.lostKicker',values);
+  $('result-title').textContent=t(won?'result.wonTitle':'result.lostTitle');
+  $('result-description').textContent=t(won?'result.wonDescription':'result.lostDescription',values);
   $('result-time').innerHTML=`${game.elapsed.toFixed(1)}<small>s</small>`;$('result-dodges').textContent=game.dodges;$('result-distance').innerHTML=`${Math.round(game.distance)}<small>m</small>`;
-  $('result-reflection').textContent=won?'한 번 살아남았다고, 다음에도 살아남을 수 있을까요?':'화면 너머에서는 다시 시작할 수 없는 순간입니다.';
-  $('retry-button').focus({preventScroll:true});
+}
+function finish(){
+  clearInput();releaseMouse();audio.suspend();sync();renderResult();$('retry-button').focus({preventScroll:true});
 }
 function telemetry(){
-  const p=game.player,remaining=Math.max(0,DURATION-game.elapsed).toFixed(1).split('.');$('timer').innerHTML=`${remaining[0]}<small>.${remaining[1]}</small>`;$('speed').textContent=Math.round(Math.abs(p.speed)*3.6);$('energy').textContent=`${Math.round(p.energy)}%`;$('energy-fill').style.width=`${p.energy}%`;$('energy-fill').style.background=p.energy<20?'#f18a58':'#dfd7af';$('integrity').textContent=mode==='armor'?`장갑 ${p.health} / 2${p.invulnerable>0?' · 피격':''}`:mode==='foot'?(p.altitude>.05?'공중 · 무적 효과 없음':p.jumpCooldown>0?'착지 후 다시 점프':'SPACE 점프 · SHIFT 질주'):'피격 허용 없음';
+  const p=game.player,remaining=Math.max(0,DURATION-game.elapsed).toFixed(1).split('.');$('timer').innerHTML=`${remaining[0]}<small>.${remaining[1]}</small>`;$('speed').textContent=Math.round(Math.abs(p.speed)*3.6);$('energy').textContent=`${Math.round(p.energy)}%`;$('energy-fill').style.width=`${p.energy}%`;$('energy-fill').style.background=p.energy<20?'#f18a58':'#dfd7af';$('integrity').textContent=mode==='armor'?t('hud.armor',{health:p.health})+(p.invulnerable>0?t('hud.hit'):''):mode==='foot'?t(p.altitude>.05?'hud.airborne':p.jumpCooldown>0?'hud.jumpCooldown':'hud.jumpReady'):t('hud.oneHit');
   const directions=['N','NW','W','SW','S','SE','E','NE'],index=((Math.round(p.yaw/(Math.PI/4))%8)+8)%8;$('compass').textContent=directions[index];$('compass-left').textContent=directions[(index+1)%8];$('compass-right').textContent=directions[(index+7)%8];
   $('warning').style.opacity=game.threat>.3||game.boundary?'1':'0';
-  $('warning-label').textContent=game.boundary?'작전 구역 경계':game.threat>.95?'고속 통과 임박':'드론 고속 접근';
-  $('warning-sub').textContent=game.boundary?'방향을 바꿔 구역 안으로 이동하세요':game.threat>.7?'감속하지 않고 접근합니다':'접근 방향을 살피세요';
-  const closest=[...game.drones].sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];$('drone-speed').textContent=closest?`${Math.round(Math.hypot(closest.vx,closest.vy,closest.vz)*3.6)} km/h`:'접근 대기';$('pass-flash').style.opacity=!reduced&&game.lastPass?String(Math.max(0,1-(game.elapsed-game.lastPass.time)*3)*.42):'0';
+  $('warning-label').textContent=t(game.boundary?'warning.boundary':game.threat>.95?'warning.imminent':'warning.approaching');
+  $('warning-sub').textContent=t(game.boundary?'warning.boundaryDetail':game.threat>.7?'warning.noBraking':'warning.direction');
+  const closest=[...game.drones].sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];$('drone-speed').textContent=closest?`${Math.round(Math.hypot(closest.vx,closest.vy,closest.vz)*3.6)} km/h`:t('hud.waiting');$('pass-flash').style.opacity=!reduced&&game.lastPass?String(Math.max(0,1-(game.elapsed-game.lastPass.time)*3)*.42):'0';
   $('intro-toast').style.opacity=game.elapsed<5?'1':'0';$('damage-flash').style.opacity=p.invulnerable>0?String(Math.min(.9,p.invulnerable*.4)):'0';
 }
 function look(dx,dy){game.player.yaw-=dx*.0025;game.player.pitch=clamp(game.player.pitch-dy*.0022,-1.18,1.3)}
@@ -62,9 +82,11 @@ function loop(time){
 
 $('start-button').addEventListener('click',()=>start());$('retry-button').addEventListener('click',()=>start());$('setup-button').addEventListener('click',setup);$('quit-button').addEventListener('click',setup);$('pause-button').addEventListener('click',pause);$('resume-button').addEventListener('click',resume);$('reload-button').addEventListener('click',()=>location.reload());
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>selectMode(b.dataset.mode));for(const b of document.querySelectorAll('[data-difficulty]'))b.addEventListener('click',()=>selectDifficulty(b.dataset.difficulty));
-$('audio-button').addEventListener('click',async()=>{soundEnabled=!soundEnabled;if(soundEnabled)await enableAudio();audio.setEnabled(soundEnabled);$('audio-button').textContent=soundEnabled?'SOUND ON':'SOUND OFF';$('audio-button').setAttribute('aria-pressed',String(soundEnabled));$('audio-button').setAttribute('aria-label',soundEnabled?'소리 끄기':'소리 켜기')});
+$('audio-button').addEventListener('click',async()=>{soundEnabled=!soundEnabled;audioUnavailable=false;if(soundEnabled)await enableAudio();audio.setEnabled(soundEnabled);syncAudio()});
+$('language-select').addEventListener('focus',()=>pause(false));
+$('language-select').addEventListener('change',event=>changeLanguage(event.target.value));
 function openHelp(){pause();$('help-dialog').showModal()}$('help-button').addEventListener('click',openHelp);$('specs-button').addEventListener('click',openHelp);['close-help','understood-button'].forEach(id=>$(id).addEventListener('click',()=>$('help-dialog').close()));$('motion-toggle').addEventListener('change',()=>reduced=$('motion-toggle').checked);
-window.addEventListener('keydown',event=>{if($('help-dialog').open)return;if(event.code==='Escape'){if(game.status==='playing')pause();return}if(game.status==='playing'&&['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)){event.preventDefault();keys.add(event.code)}});
+window.addEventListener('keydown',event=>{if($('help-dialog').open||event.target=== $('language-select'))return;if(event.code==='Escape'){if(game.status==='playing')pause();return}if(game.status==='playing'&&['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)){event.preventDefault();keys.add(event.code)}});
 window.addEventListener('keyup',event=>keys.delete(event.code));window.addEventListener('blur',()=>{clearInput();pause()});document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
 window.addEventListener('mousemove',event=>{if(game.status==='playing'&&document.pointerLockElement===canvas)look(event.movementX,event.movementY)});
 canvas.addEventListener('pointerdown',event=>{if(game.status!=='playing'||document.pointerLockElement===canvas)return;dragPointer=event.pointerId;dragX=event.clientX;dragY=event.clientY;canvas.setPointerCapture(event.pointerId)});
@@ -76,13 +98,13 @@ const stick=$('joystick');function moveStick(event){if(event.pointerId!==stickPo
 stick.addEventListener('pointerdown',event=>{if(game.status!=='playing'||stickPointer!==null)return;event.preventDefault();stickPointer=event.pointerId;stick.setPointerCapture(event.pointerId);moveStick(event)});stick.addEventListener('pointermove',moveStick);['pointerup','pointercancel','lostpointercapture'].forEach(name=>stick.addEventListener(name,event=>{if(stickPointer!==event.pointerId)return;touch.forward=touch.right=0;stickPointer=null;$('joystick-knob').style.transform='translate(0,0)'}));
 $('boost-button').addEventListener('pointerdown',event=>{event.preventDefault();touch.boost=true;$('boost-button').setPointerCapture(event.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(name=>$('boost-button').addEventListener(name,()=>touch.boost=false));
 $('jump-button').addEventListener('pointerdown',event=>{if(game.status!=='playing'||mode!=='foot')return;event.preventDefault();touch.jump=true;$('jump-button').setPointerCapture(event.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(name=>$('jump-button').addEventListener(name,()=>touch.jump=false));
-canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();pause();$('error-screen').hidden=false;$('error-message').textContent='그래픽 연결이 끊겼습니다. 다시 불러오면 처음부터 시작합니다.'});
+canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();pause();$('error-screen').hidden=false;$('error-message').dataset.i18n='error.context';$('error-message').textContent=t('error.context')});
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(frameId);audio.destroy();view?.destroy()},{once:true});window.addEventListener('pageshow',event=>{if(event.persisted)location.reload()});
 
 // Optional browser-native agent interface uses exactly the same UI state/actions.
 if(document.modelContext?.registerTool){
   const lifecycle=new AbortController();
-  const tools=[{name:'read_simulation_status',description:'Read current first-person drone simulation state without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({status:game.status,mode,difficulty,elapsed:+game.elapsed.toFixed(1),health:game.player.health,dodges:game.dodges,altitude:+game.player.altitude.toFixed(2),nearMisses:game.nearMisses,referenceMaxKmh:+(DIFFICULTIES[difficulty].speed*3.6).toFixed(1)})},{name:'configure_simulation',description:'Select transport and difficulty on the start screen. Does not start the simulation.',inputSchema:{type:'object',properties:{mode:{type:'string',enum:['foot','bike','armor']},difficulty:{type:'string',enum:['easy','normal','hard']}},required:['mode','difficulty'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{if(game.status!=='ready')throw new Error('Return to the selection screen first');if(!input||!MODES[input.mode]||!DIFFICULTIES[input.difficulty])throw new Error('Invalid transport or difficulty');selectMode(input.mode);selectDifficulty(input.difficulty);return {status:'ready',mode,difficulty}}}];
+  const tools=[{name:'read_simulation_status',description:'Read current first-person drone simulation state without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({status:game.status,mode,difficulty,locale,elapsed:+game.elapsed.toFixed(1),health:game.player.health,dodges:game.dodges,altitude:+game.player.altitude.toFixed(2),nearMisses:game.nearMisses,referenceMaxKmh:+(DIFFICULTIES[difficulty].speed*3.6).toFixed(1)})},{name:'configure_simulation',description:'Select transport and difficulty on the start screen. Does not start the simulation.',inputSchema:{type:'object',properties:{mode:{type:'string',enum:['foot','bike','armor']},difficulty:{type:'string',enum:['easy','normal','hard']}},required:['mode','difficulty'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{if(game.status!=='ready')throw new Error('Return to the selection screen first');if(!input||!MODES[input.mode]||!DIFFICULTIES[input.difficulty])throw new Error('Invalid transport or difficulty');selectMode(input.mode);selectDifficulty(input.difficulty);return {status:'ready',mode,difficulty}}}];
   for(const tool of tools){try{Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{})}catch{}}
   addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
 }
