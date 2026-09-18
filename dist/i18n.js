@@ -141,7 +141,7 @@ export const messages = {
 export function resolveLocale(saved, languages=[]){
   if(Object.hasOwn(messages,saved))return saved;
   for(const language of languages){const base=String(language).toLowerCase().split(/[-_]/)[0];if(Object.hasOwn(messages,base))return base}
-  return 'ko';
+  return 'en';
 }
 export function translate(locale,key,values={}){
   const template=messages[locale]?.[key]??messages.ko[key];

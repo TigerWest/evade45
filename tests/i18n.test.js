@@ -23,8 +23,8 @@ test('saved selection wins; browser regional languages resolve with a supported 
   assert.equal(resolveLocale(null,['en-US','ko-KR']),'en');
   assert.equal(resolveLocale(null,['ja-JP','ko-KR','en-US']),'ko');
   assert.equal(resolveLocale('invalid',['EN_gb']),'en');
-  assert.equal(resolveLocale(undefined,['fr-FR']),'ko');
-  assert.equal(resolveLocale('toString',[]),'ko');
+  assert.equal(resolveLocale(undefined,['fr-FR']),'en');
+  assert.equal(resolveLocale('toString',[]),'en');
 });
 
 test('dynamic results and specs use translated mode names, difficulty and values',()=>{
