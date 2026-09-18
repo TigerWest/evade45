@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../dist/vendor/three.module.js';
-import {createGame} from '../dist/engine.js';
+import {createGame,stepGame} from '../dist/engine.js';
 import {createCockpit} from '../dist/cockpit.js';
 
 function fixture(t){
@@ -79,3 +79,19 @@ test('sprint and jump poses blend in instead of snapping on a single frame',t=>{
   cockpit.update(game,1,1/120,false);
   assert.ok(maxChange(before,footPose(camera))<.025);
 });
+
+for(const mode of ['bike','armor'])for(const forward of [1,-1])for(const right of [-1,1]){
+  test(`${mode} handle turns ${right<0?'left':'right'} while driving ${forward>0?'forward':'backward'}`,t=>{
+    const {scene,cockpit,game}=fixture(t);game.mode=mode;game.nextDrone=Infinity;game.player.speed=forward*5;
+    cockpit.update(game,0,1/60,false);
+    for(let i=0;i<24;i++){stepGame(game,{forward,right},1/60);cockpit.update(game,i/60,1/60,false)}
+    assert.ok(game.player.bodyYaw*(-right*forward)>0,'chassis must follow the requested turn');
+    const control=scene.getObjectByName(mode==='bike'?'handlebars':'steering-wheel');
+    // In driver coordinates, a left handlebar points left (-X); the top of
+    // a left-turned steering wheel also moves left, even when reversing.
+    const direction=new THREE.Vector3(0,mode==='bike'?0:1,mode==='bike'?-1:0).applyQuaternion(control.quaternion);
+    assert.ok(direction.x*right>.005,'visible handle must turn toward the steering input');
+    for(let i=0;i<60;i++){game.player.yaw+=.01;stepGame(game,{forward,right:0},1/60);cockpit.update(game,(24+i)/60,1/60,false)}
+    assert.ok(control.quaternion.angleTo(new THREE.Quaternion())<.005,'release should recenter; looking around must not steer');
+  });
+}

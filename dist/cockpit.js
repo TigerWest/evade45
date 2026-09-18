@@ -109,7 +109,7 @@ export function createCockpit(camera){
     box(needle,r*.31,0,0,r*.76,.005,.004,amber);oval(g,0,0,.02,.012,.012,.006,steel);
     needle.rotation.z=Math.PI*1.25;return {needle,max};
   }
-  const bike=views.bike,bar=new THREE.Group();bike.add(bar);bar.position.set(0,-.39,-.66);
+  const bike=views.bike,bar=new THREE.Group();bike.add(bar);bar.name='handlebars';bar.position.set(0,-.39,-.66);
   // Sculpted fuel tank and cap, with a center seam and knee panels.
   oval(bike,0,-.78,-.48,.22,.2,.42,paint);
   oval(bike,0,-.625,-.57,.16,.065,.27,paint);
@@ -172,7 +172,7 @@ export function createCockpit(camera){
   label(dash,'AUX / LIGHT / VENT',.38,-.076,.127,.4,.021);
   for(const s of [-1,1])for(let i=0;i<5;i++)box(dash,s*.8,.087-i*.034,.111,.16,.011,.009,black);
   const wheel=new THREE.Group();wheel.position.set(0,-.34,-.72);wheel.rotation.x=-.25;armor.add(wheel);
-  const wheelTurn=new THREE.Group();wheel.add(wheelTurn);
+  const wheelTurn=new THREE.Group();wheel.add(wheelTurn);wheelTurn.name='steering-wheel';
   ring(wheelTurn,0,0,0,.215,.021,rubber);ring(wheelTurn,0,0,-.009,.215,.005,edge);
   for(const a of [0,Math.PI,Math.PI*1.5])rod(wheelTurn,[0,0,-.01],[Math.cos(a)*.2,Math.sin(a)*.2,-.003],.014,steel);
   oval(wheelTurn,0,0,.009,.063,.047,.03,black);bolt(wheelTurn,0,0,.04,.013);
@@ -252,7 +252,9 @@ export function createCockpit(camera){
     vehicle.position.set(p.x,p.y,p.z);vehicle.rotation.set(0,p.bodyYaw,0);
     const moving=clamp(Math.abs(p.speed)/4,0,1);
     const yawRate=lastYaw===null||dt<=0||game.status!=='playing'?0:angleDifference(p.bodyYaw,lastYaw)/dt;
-    lastYaw=p.bodyYaw;steer+=(clamp(-yawRate*.23,-.3,.3)-steer)*Math.min(dt*9,1);
+    // Positive yaw is a left turn; reversing flips chassis yaw, not the handle.
+    const handleRate=yawRate*(p.speed<-.1?-1:1);
+    lastYaw=p.bodyYaw;steer+=(clamp(handleRate*.23,-.3,.3)-steer)*Math.min(dt*9,1);
     if(game.mode==='foot'&&game.status==='playing'){
       const step=clamp(dt,0,.1),blend=1-Math.exp(-step*10),speed=Math.abs(p.speed);
       gaitWeight+=(clamp(speed/4.9,0,1)-gaitWeight)*blend;
