@@ -33,7 +33,7 @@ test('React menu configures a run and switches locale without imperative DOM upd
     'aria-pressed',
     'true',
   );
-  expect(localStorage.getItem('dead-air.locale')).toBe('en');
+  expect(localStorage.getItem('evade45.locale')).toBe('en');
   fireEvent.click(screen.getByRole('button', { name: /^Start game/ }));
   expect(screen.getByLabelText('Game status')).toBeInTheDocument();
   expect(screen.queryByText('Choose your transport')).not.toBeInTheDocument();

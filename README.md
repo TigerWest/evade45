@@ -1,6 +1,8 @@
-# DEAD AIR · 1인칭 3D 드론 생존 체험
+# EVADE 45 · 1인칭 3D 드론 생존 체험
 
 지상 시점에서 도보·오토바이·경장갑차로 45초간 드론을 피하는 한국어·영어 3D 웹게임. TypeScript와 React로 UI·게임 상태를 관리하고 React Three Fiber/Three.js로 전장, 차량 조종석, 이동하는 드론을 렌더링합니다.
+
+[게임 플레이](https://tigerwest.github.io/evade45/) · [GitHub 저장소](https://github.com/TigerWest/evade45)
 
 ## 실행
 
@@ -10,13 +12,19 @@ npm run build
 npm run dev
 ```
 
-http://127.0.0.1:5173 에 접속합니다. Node.js 20 이상이 필요합니다. `npm run build`가 Vite 기반 정적 산출물을 `dist/`에 생성하며 외부 CDN을 호출하지 않습니다.
+http://127.0.0.1:5173/evade45/ 에 접속합니다. Node.js 22.12 이상을 권장합니다. `npm run build`가 Vite 기반 정적 산출물을 `dist/`에 생성하며 게임 코드는 외부 CDN을 호출하지 않습니다.
+
+## GitHub Pages 배포
+
+`main` 브랜치에 push하면 `.github/workflows/deploy.yml`이 의존성을 설치하고 포맷·lint·타입·테스트·빌드를 검증한 뒤 `dist/`를 GitHub Pages에 배포합니다. Actions 화면에서 수동 실행할 수도 있습니다.
+
+Vite의 `base`는 프로젝트 주소에 맞춘 `/evade45/`입니다. 저장소의 Settings → Pages → Source는 GitHub Actions를 사용합니다.
 
 ## 방문 통계
 
-Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을 사용합니다. 측정 ID는 `G-QKQN09HT0S`이며 태그는 `dist/index.html`에 있습니다.
+Google Analytics 4의 기존 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을 사용합니다. 측정 ID는 `G-QKQN09HT0S`이며 태그 원본은 루트 `index.html`에 있습니다. Analytics 관리 화면의 속성·스트림 이름과 URL은 이번 코드 변경으로 수정되지 않습니다.
 
-태그는 배포 도메인 `dead-air-evasion-gbs0918.sidejump2.chatgpt.site`에서만 로드되어 로컬 개발 접속은 집계하지 않습니다. 태그 초기화는 루트 `index.html`에 있으며 페이지 주소에서는 쿼리 문자열과 해시를 제외합니다. 기본 페이지 조회 및 GA4 향상된 측정을 사용하며 게임별 맞춤 이벤트는 추가하지 않았습니다. 도메인을 변경하면 호스트 조건과 Analytics 웹 스트림 URL을 함께 수정하세요.
+태그는 `tigerwest.github.io`의 `/evade45/` 경로에서만 로드되어 로컬 개발 접속은 집계하지 않습니다. 페이지 주소에서는 쿼리 문자열과 해시를 제외합니다. 기본 페이지 조회 및 GA4 향상된 측정을 사용하며 게임별 맞춤 이벤트는 추가하지 않았습니다.
 
 ## 조작
 

@@ -2,7 +2,7 @@
 export type Locale = 'ko' | 'en';
 export const messages: Record<Locale, Record<string, string>> = {
   ko: {
-    'page.title': 'DEAD AIR · 3D 드론 회피 게임',
+    'page.title': 'EVADE 45 · 3D 드론 회피 게임',
     'page.description': '도보, 오토바이, 경장갑차로 45초 동안 드론을 피하는 1인칭 3D 게임입니다.',
     'world.label': '1인칭 3D 게임 화면. WASD로 이동하고 마우스로 시선을 돌립니다.',
     loading: '게임을 불러오는 중…',
@@ -127,7 +127,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     'help.done': '닫기',
   },
   en: {
-    'page.title': 'DEAD AIR · 3D Drone Evasion Game',
+    'page.title': 'EVADE 45 · 3D Drone Evasion Game',
     'page.description':
       'Avoid drones for 45 seconds in a first-person 3D game, on foot, by motorcycle or in a light armored vehicle.',
     'world.label': 'First-person 3D game. Move with WASD and look around with the mouse.',

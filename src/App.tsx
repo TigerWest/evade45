@@ -32,7 +32,7 @@ const controlledKeys = new Set([
 
 function savedLocale(): Locale {
   try {
-    return resolveLocale(localStorage.getItem('dead-air.locale'), navigator.languages);
+    return resolveLocale(localStorage.getItem('evade45.locale'), navigator.languages);
   } catch {
     return resolveLocale(null, navigator.languages);
   }
@@ -78,7 +78,7 @@ export function App() {
       .querySelector<HTMLMetaElement>('meta[name="description"]')
       ?.setAttribute('content', t('page.description'));
     try {
-      localStorage.setItem('dead-air.locale', locale);
+      localStorage.setItem('evade45.locale', locale);
     } catch {}
   }, [locale, t]);
   useEffect(() => () => audioRef.current.destroy(), []);
@@ -374,14 +374,14 @@ export function App() {
       />
       {loading && (
         <div id="loading">
-          <span className="loading-brand">DEAD AIR</span>
+          <span className="loading-brand">EVADE 45</span>
           <p>{t('loading')}</p>
           <div className="loading-line" />
         </div>
       )}
       <header className="topbar">
         <a className="brand" href="./">
-          <span className="brand-cross">⌖</span> DEAD AIR
+          <span className="brand-cross">⌖</span> EVADE 45
           <span className="brand-small">{t('brand.subtitle')}</span>
         </a>
         <div className="header-right">
