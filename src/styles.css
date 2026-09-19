@@ -114,6 +114,7 @@ a {
 }
 .brand-small {
   font: 7px/1.6 var(--mono);
+  text-wrap: balance;
   color: #d5d4c4a1;
   letter-spacing: 1.6px;
   border-left: 1px solid #ddddcd40;
