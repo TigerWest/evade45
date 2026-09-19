@@ -1,8 +1,8 @@
-import test from 'node:test';
+import {test} from 'vitest';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {messages,resolveLocale,translate,applyLocale} from '../dist/i18n.js';
-import {MODES,DIFFICULTIES} from '../dist/engine.js';
+import {messages,resolveLocale,translate,applyLocale} from '../src/i18n';
+import {MODES,DIFFICULTIES} from '../src/game/engine';
 
 const placeholders=text=>[...text.matchAll(/\{(\w+)\}/g)].map(m=>m[1]).sort();
 
@@ -40,15 +40,12 @@ test('dynamic results and specs use translated mode names, difficulty and values
   assert.throws(()=>translate('en','missing.key'),/Unknown translation/);
 });
 
-test('every HTML translation reference and dynamic UI key exists in both locales',async()=>{
-  const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
-  const game=await readFile(new URL('../dist/game.js',import.meta.url),'utf8');
-  const keys=[...html.matchAll(/data-i18n(?:-aria|-content)?="([^"]+)"/g)].map(m=>m[1]);
-  keys.push(...[...game.matchAll(/'((?:audio|controls|hud|warning|result|error|spec)\.[\w.]+)'/g)].map(m=>m[1]));
-  assert.ok(keys.length>90);
+test('every static React translation reference exists in both locales',async()=>{
+  const app=await readFile(new URL('../src/App.tsx',import.meta.url),'utf8');
+  const keys=[...app.matchAll(/\bt\('([^']+)'/g)].map(m=>m[1]);
+  assert.ok(keys.length>35);
   for(const key of keys)for(const locale of Object.keys(messages))assert.equal(typeof messages[locale][key],'string',`${locale}.${key}`);
-  assert.doesNotMatch(game,/[가-힣]/,'game logic must not contain untranslated Korean copy');
-  assert.doesNotMatch(html,/화면 너머|소리가 멈췄습니다|실전 압박/);
+  assert.doesNotMatch(app,/화면 너머|소리가 멈췄습니다|실전 압박/);
 });
 
 test('switching locale replaces content and accessibility labels without removing markup',()=>{

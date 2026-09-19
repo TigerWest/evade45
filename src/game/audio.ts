@@ -1,7 +1,20 @@
-export function createAudio(){
-  let context,master,voices=[],engineGain,engineOsc,windGain,breathGain,enabled=true,lastStep=0,lastBeat=0;
-  async function unlock(){
-    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return false;
+import type {GameState} from './types';
+
+interface DroneVoice {
+  osc:OscillatorNode; second:OscillatorNode; filter:BiquadFilterNode;
+  gain:GainNode; pan:StereoPannerNode;
+}
+
+export interface GameAudio {
+  unlock:()=>Promise<boolean>; setEnabled:(value:boolean)=>void; passBy:(side:number)=>void;
+  impact:()=>void; update:(game:GameState,time:number)=>void; suspend:()=>void; destroy:()=>void;
+}
+
+export function createAudio():GameAudio{
+  let context:AudioContext|undefined,master:GainNode|undefined,engineGain:GainNode|undefined,engineOsc:OscillatorNode|undefined,windGain:GainNode|undefined,breathGain:GainNode|undefined;
+  const voices:DroneVoice[]=[];let enabled=true,lastStep=0,lastBeat=0;
+  async function unlock():Promise<boolean>{
+    const Audio=window.AudioContext||(window as typeof window&{webkitAudioContext?:typeof AudioContext}).webkitAudioContext;if(!Audio)return false;
     if(!context){
       context=new Audio();master=context.createGain();master.gain.value=.55;master.connect(context.destination);
       const buffer=context.createBuffer(1,context.sampleRate*2,context.sampleRate),data=buffer.getChannelData(0);let previous=0;for(let i=0;i<data.length;i++){previous=(previous+(Math.random()*2-1)*.022)/1.025;data[i]=previous*3}
@@ -15,14 +28,14 @@ export function createAudio(){
     }
     try{await context.resume();return true}catch{return false}
   }
-  function tone(freq,duration,volume,type='sine'){if(!context||!enabled)return;const o=context.createOscillator(),g=context.createGain();o.type=type;o.frequency.setValueAtTime(freq,context.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(25,freq*.4),context.currentTime+duration);g.gain.setValueAtTime(volume,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+duration);o.connect(g);g.connect(master);o.start();o.stop(context.currentTime+duration)}
+  function tone(freq:number,duration:number,volume:number,type:OscillatorType='sine'){if(!context||!enabled||!master)return;const o=context.createOscillator(),g=context.createGain();o.type=type;o.frequency.setValueAtTime(freq,context.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(25,freq*.4),context.currentTime+duration);g.gain.setValueAtTime(volume,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+duration);o.connect(g);g.connect(master);o.start();o.stop(context.currentTime+duration)}
   return {
     unlock,
-    setEnabled(value){enabled=value;if(master)master.gain.setTargetAtTime(value?.55:0,context.currentTime,.08)},
-    passBy(side){if(!context||!enabled)return;const source=context.createBufferSource(),buffer=context.createBuffer(1,Math.ceil(context.sampleRate*.32),context.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1);source.buffer=buffer;const filter=context.createBiquadFilter(),gain=context.createGain(),pan=context.createStereoPanner();filter.type='bandpass';filter.Q.value=.65;filter.frequency.setValueAtTime(2200,context.currentTime);filter.frequency.exponentialRampToValueAtTime(280,context.currentTime+.32);gain.gain.setValueAtTime(.001,context.currentTime);gain.gain.linearRampToValueAtTime(.2,context.currentTime+.045);gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.32);pan.pan.setValueAtTime(side*.75,context.currentTime);pan.pan.linearRampToValueAtTime(-side*.35,context.currentTime+.32);source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(master);source.start();source.stop(context.currentTime+.33)},
+    setEnabled(value:boolean){enabled=value;if(master&&context)master.gain.setTargetAtTime(value?.55:0,context.currentTime,.08)},
+    passBy(side:number){if(!context||!enabled||!master)return;const source=context.createBufferSource(),buffer=context.createBuffer(1,Math.ceil(context.sampleRate*.32),context.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1);source.buffer=buffer;const filter=context.createBiquadFilter(),gain=context.createGain(),pan=context.createStereoPanner();filter.type='bandpass';filter.Q.value=.65;filter.frequency.setValueAtTime(2200,context.currentTime);filter.frequency.exponentialRampToValueAtTime(280,context.currentTime+.32);gain.gain.setValueAtTime(.001,context.currentTime);gain.gain.linearRampToValueAtTime(.2,context.currentTime+.045);gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.32);pan.pan.setValueAtTime(side*.75,context.currentTime);pan.pan.linearRampToValueAtTime(-side*.35,context.currentTime+.32);source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(master);source.start();source.stop(context.currentTime+.33)},
     impact(){tone(65,.55,.5,'sawtooth');tone(170,.18,.16,'triangle')},
-    update(game,time){
-      if(!context)return;const active=game.status==='playing',p=game.player;
+    update(game:GameState,time:number){
+      if(!context||!windGain||!breathGain||!engineGain||!engineOsc)return;const active=game.status==='playing',p=game.player;
       windGain.gain.setTargetAtTime(active?.09:0,context.currentTime,.3);
       const exertion=(100-p.energy)/100;breathGain.gain.setTargetAtTime(active&&game.mode==='foot'?Math.pow(Math.max(0,Math.sin(time*(2.5+exertion*2))),2)*(.05+exertion*.55):0,context.currentTime,.08);
       const closest=[...game.drones].sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z)).slice(0,4);
@@ -31,7 +44,7 @@ export function createAudio(){
       if(active&&game.mode==='foot'&&p.altitude===0&&p.speed>1&&time-lastStep>(p.boosting?.28:.43)){tone(72+Math.random()*15,.075,.065,'triangle');lastStep=time}
       if(active&&game.threat>.7&&time-lastBeat>.55){tone(48,.13,.08);lastBeat=time}
     },
-    suspend(){if(context){voices.forEach(v=>v.gain.gain.setTargetAtTime(0,context.currentTime,.04));engineGain.gain.setTargetAtTime(0,context.currentTime,.04);windGain.gain.setTargetAtTime(0,context.currentTime,.04);breathGain.gain.setTargetAtTime(0,context.currentTime,.04)}},
+    suspend(){if(context){voices.forEach(v=>v.gain.gain.setTargetAtTime(0,context!.currentTime,.04));engineGain?.gain.setTargetAtTime(0,context.currentTime,.04);windGain?.gain.setTargetAtTime(0,context.currentTime,.04);breathGain?.gain.setTargetAtTime(0,context.currentTime,.04)}},
     destroy(){context?.close()},
   };
 }

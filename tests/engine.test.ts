@@ -1,11 +1,12 @@
-import test from 'node:test';
+import {test} from 'vitest';
 import assert from 'node:assert/strict';
-import {createGame,stepGame,MODES,DIFFICULTIES,JUMP,OBSTACLES,WORLD_LIMIT,circleHitsRect} from '../dist/engine.js';
+import {createGame,stepGame,MODES,DIFFICULTIES,JUMP,OBSTACLES,WORLD_LIMIT,circleHitsRect} from '../src/game/engine';
+import type {Difficulty, DroneState, GameInput, GameState, Mode} from '../src/game/types';
 const still={forward:0,right:0,boost:false,jump:false};
-function playing(mode='foot',difficulty='normal'){const g=createGame(mode,difficulty,123);g.status='playing';return g}
-function advance(g,seconds,input=still,hz=120){for(let i=0;i<Math.round(seconds*hz);i++)stepGame(g,input,1/hz)}
-function noEnemies(g){g.nextDrone=Infinity;return g}
-function incoming(g,{id=1,y=.95,z=g.player.z-2,speed=27,phase='commit'}={}){return {id,x:g.player.x,y,z,vx:0,vy:0,vz:speed,age:0,phase,roll:0,closest:Infinity,passed:false}}
+function playing(mode:Mode='foot',difficulty:Difficulty='normal'){const g=createGame(mode,difficulty,123);g.status='playing';return g}
+function advance(g:GameState,seconds:number,input:GameInput=still,hz=120){for(let i=0;i<Math.round(seconds*hz);i++)stepGame(g,input,1/hz)}
+function noEnemies(g:GameState){g.nextDrone=Infinity;return g}
+function incoming(g:GameState,{id=1,y=.95,z=g.player.z-2,speed=27,phase='commit'}:Partial<DroneState>&{speed?:number}={}):DroneState{return {id,x:g.player.x,y,z,vx:0,vy:0,vz:speed,age:0,phase,roll:0,closest:Infinity,passed:false}}
 
 test('ready and paused states freeze',()=>{const g=createGame();advance(g,1,{forward:1,jump:true});assert.equal(g.elapsed,0);g.status='paused';advance(g,1);assert.equal(g.player.z,24);assert.equal(g.player.altitude,0)});
 test('surviving 45 seconds produces success and freezes state',()=>{const g=noEnemies(playing());advance(g,46);assert.equal(g.status,'won');assert.equal(g.elapsed,45);advance(g,2,{forward:1});assert.equal(g.player.z,24)});
@@ -14,7 +15,7 @@ test('standing still is caught; incoming drone never pauses to aim',()=>{const g
 test('straight sprinting is insufficient in the pressure scenario',()=>{const g=playing();advance(g,10,{forward:1,boost:true});assert.equal(g.status,'lost');assert.ok(g.distance>10)});
 test('steering preserves speed and cannot instantaneously reverse',()=>{const g=noEnemies(playing());const d=incoming(g,{phase:'approach',z:24});d.x=35;d.y=4;d.vz=-27;g.drones.push(d);stepGame(g,still,1/120);assert.ok(Math.abs(Math.hypot(d.vx,d.vy,d.vz)-27)<1e-8);assert.ok(d.vz<-26);assert.ok(d.vx<0);assert.ok(Math.abs(d.roll)>0)});
 test('committed approach keeps direction and momentum past its target',()=>{const g=noEnemies(playing());const d=incoming(g,{y:4,z:20});g.drones.push(d);advance(g,.4,{right:1});assert.equal(d.phase,'pass');assert.ok(d.z>24);assert.equal(d.vz,27);assert.equal(d.vx,0);assert.equal(d.vy,0)});
-test('high-speed 3D collision cannot tunnel through any transport',()=>{for(const mode of Object.keys(MODES)){const g=noEnemies(playing(mode));g.drones.push(incoming(g,{speed:140/3.6}));stepGame(g,still,.2);assert.equal(g.player.health,MODES[mode].health-1,mode)}});
+test('high-speed 3D collision cannot tunnel through any transport',()=>{for(const mode of Object.keys(MODES) as Mode[]){const g=noEnemies(playing(mode));g.drones.push(incoming(g,{speed:140/3.6}));stepGame(g,still,.2);assert.equal(g.player.health,MODES[mode].health-1,mode)}});
 test('armor survives one impact and fails on second; simultaneous hits are gated',()=>{const g=noEnemies(playing('armor'));g.drones.push(incoming(g),incoming(g,{id:2}));advance(g,.2);assert.equal(g.player.health,1);assert.equal(g.damageCount,1);advance(g,2.1);g.drones.push(incoming(g,{id:3}));advance(g,.2);assert.equal(g.status,'lost')});
 test('flight above the player does not collide',()=>{const g=noEnemies(playing());g.drones.push(incoming(g,{y:4}));advance(g,.3);assert.equal(g.player.health,1)});
 test('jump follows a vertical arc, costs energy, and lands',()=>{const g=noEnemies(playing());stepGame(g,{jump:true},1/120);assert.ok(g.player.energy<100-JUMP.cost+1);let peak=0;for(let i=0;i<120;i++){stepGame(g,{jump:true},1/120);peak=Math.max(peak,g.player.altitude)}assert.ok(peak>.8&&peak<1.1);assert.equal(g.player.altitude,0);assert.equal(g.player.y,MODES.foot.eye);assert.equal(g.player.invulnerable,0)});
@@ -31,7 +32,7 @@ test('bad deltas are ignored and stalls bounded',()=>{assert.throws(()=>createGa
 test('practice still has a viable survival path',()=>{const g=playing('foot','easy');for(let i=0;i<46*120&&g.status==='playing';i++){g.player.yaw=-i/120*.7;stepGame(g,{forward:1},1/120)}assert.equal(g.status,'won');assert.ok(g.dodges>=4)});
 
 test('spawned approaches reach an exposed stationary player from every viewing direction',()=>{
-  for(const difficulty of Object.keys(DIFFICULTIES))for(const mode of Object.keys(MODES))for(let angle=0;angle<24;angle++){
+  for(const difficulty of Object.keys(DIFFICULTIES) as Difficulty[])for(const mode of Object.keys(MODES) as Mode[])for(let angle=0;angle<24;angle++){
     const g=playing(mode,difficulty);g.player.yaw=angle*Math.PI/12;g.nextDrone=0;
     stepGame(g,still,1/120);g.nextDrone=Infinity;
     assert.equal(g.drones.length,1);

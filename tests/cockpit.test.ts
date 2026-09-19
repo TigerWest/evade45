@@ -1,8 +1,8 @@
-import test from 'node:test';
+import {test} from 'vitest';
 import assert from 'node:assert/strict';
-import * as THREE from '../dist/vendor/three.module.js';
-import {createGame,stepGame} from '../dist/engine.js';
-import {createCockpit} from '../dist/cockpit.js';
+import * as THREE from 'three';
+import {createGame,stepGame} from '../src/game/engine';
+import {createCockpit} from '../src/game/cockpit';
 
 function fixture(t){
   // Texture painting is irrelevant to transforms/raycasting; use real Three.js geometry.
@@ -11,7 +11,7 @@ function fixture(t){
   globalThis.document={createElement:()=>({getContext:()=>context})};
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();camera.rotation.order='YXZ';scene.add(camera);
   let cockpit;try{cockpit=createCockpit(camera)}finally{globalThis.document=previous}
-  t.after(()=>cockpit.destroy());
+  t.onTestFinished(()=>cockpit.destroy());
   const game=createGame('armor');game.status='playing';
   const update=()=>{const p=game.player;camera.position.set(p.x,p.y,p.z);camera.rotation.set(p.pitch,p.yaw,0);cockpit.update(game,0,1/60,true);scene.updateMatrixWorld(true)};
   update();return {scene,camera,cockpit,game,update};

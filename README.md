@@ -1,6 +1,6 @@
 # DEAD AIR · 1인칭 3D 드론 생존 체험
 
-지상 시점에서 도보·오토바이·경장갑차로 45초간 드론을 피하는 한국어·영어 3D 웹게임. Three.js/WebGL로 전장, 건물, 차량 조종석, 이동하는 드론을 실시간 렌더링합니다.
+지상 시점에서 도보·오토바이·경장갑차로 45초간 드론을 피하는 한국어·영어 3D 웹게임. TypeScript와 React로 UI·게임 상태를 관리하고 React Three Fiber/Three.js로 전장, 차량 조종석, 이동하는 드론을 렌더링합니다.
 
 ## 실행
 
@@ -10,13 +10,13 @@ npm run build
 npm run dev
 ```
 
-http://127.0.0.1:5173 에 접속합니다. Node.js 20 이상과 Python 3이 필요합니다. `dist/`는 정적 웹서버에 그대로 올릴 수 있으며 Three.js도 로컬에 포함되어 외부 CDN을 호출하지 않습니다.
+http://127.0.0.1:5173 에 접속합니다. Node.js 20 이상이 필요합니다. `npm run build`가 Vite 기반 정적 산출물을 `dist/`에 생성하며 외부 CDN을 호출하지 않습니다.
 
 ## 방문 통계
 
 Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을 사용합니다. 측정 ID는 `G-QKQN09HT0S`이며 태그는 `dist/index.html`에 있습니다.
 
-태그는 배포 도메인 `dead-air-evasion-gbs0918.sidejump2.chatgpt.site`에서만 로드되어 로컬 개발 접속은 집계하지 않습니다. 페이지 주소에서는 쿼리 문자열과 해시를 제외합니다. 기본 페이지 조회 및 GA4 향상된 측정을 사용하며 게임별 맞춤 이벤트는 추가하지 않았습니다. 도메인을 변경하면 태그의 호스트 조건과 Analytics 웹 스트림 URL을 함께 수정하세요.
+태그는 배포 도메인 `dead-air-evasion-gbs0918.sidejump2.chatgpt.site`에서만 로드되어 로컬 개발 접속은 집계하지 않습니다. 태그 초기화는 루트 `index.html`에 있으며 페이지 주소에서는 쿼리 문자열과 해시를 제외합니다. 기본 페이지 조회 및 GA4 향상된 측정을 사용하며 게임별 맞춤 이벤트는 추가하지 않았습니다. 도메인을 변경하면 호스트 조건과 Analytics 웹 스트림 URL을 함께 수정하세요.
 
 ## 조작
 
@@ -36,26 +36,25 @@ Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을
 
 상단 언어 선택에서 한국어와 영어를 전환합니다. 저장한 선택을 우선 적용하며, 처음 방문하면 브라우저의 언어 목록에서 지원하는 언어를 선택합니다. 지원 언어가 없으면 영어를 사용합니다. 언어 선택은 이 기기의 브라우저에 저장됩니다. 저장소 사용이 차단되어도 현재 화면의 언어는 전환할 수 있습니다. 플레이 중 언어 메뉴를 열면 일시정지하며 진행 상태는 유지됩니다.
 
-문구는 `dist/i18n.js`의 `ko`·`en` 사전에서 관리합니다. 동적인 결과·경고·오류 문구와 접근성 레이블도 같은 사전을 사용합니다. `npm run build`는 사전에서 한국어 HTML 기본 문구를 갱신하므로 문구 수정 후 실행해야 합니다. 고유 이름, 키 이름, 단위, 나침반 표기는 공통으로 사용합니다.
+문구는 `src/i18n.ts`의 `ko`·`en` 사전에서 관리합니다. React 컴포넌트가 결과·경고·오류 문구와 접근성 레이블을 같은 사전에서 렌더링합니다. 고유 이름, 키 이름, 단위, 나침반 표기는 공통으로 사용합니다.
 
 ## 구성
 
-- `dist/engine.js`: 이동, 차량 관성, 3D 드론 추적·급강하, 충돌 및 생존 판정
-- `dist/render.js`: Three.js 전장, 광원·안개·그림자
-- `dist/cockpit.js`: 손가락·관절·반장갑·소매, 오토바이 조종석·360도 경장갑차 실내, 차체와 독립된 시선, 주행에 연동되는 계기 바늘·조향, 어깨·팔꿈치·손목을 사용하는 도보 동작과 부드러운 걷기·질주 전환
-- `dist/audio.js`: Web Audio 방향음과 효과음
-- `dist/i18n.js`: 한국어·영어 문구, 언어 결정 및 화면 번역
-- `dist/game.js`: 키보드·포인터·터치 입력, 일시정지 및 UI 상태
-- `tests/engine.test.js`: 게임 동작 검증
-- `tests/cockpit.test.js`: 시선 회전과 차체 좌표 분리, 차량 실내 구조·가시성·정리 검증
-- `tests/i18n.test.js`: 번역 누락·변수 일치, 언어 결정, 화면 번역 검증
-- `scripts/build.mjs`: Three.js 배포 모듈과 라이선스 로컬 복사 및 파일 검증
+- `src/App.tsx`: React 메뉴·HUD·모달, 키보드·포인터·터치 입력, 일시정지 및 UI 상태
+- `src/components/GameCanvas.tsx`: React Three Fiber `Canvas`, `useFrame` 기반 게임·장면 프레임 연결
+- `src/game/engine.ts`: 타입이 지정된 이동, 차량 관성, 3D 드론 추적·급강하, 충돌 및 생존 판정
+- `src/game/world.ts`: R3F가 소유하는 Three.js 전장, 광원·안개·그림자와 드론 표시
+- `src/game/cockpit.ts`: 도보 팔 동작, 오토바이 조종석, 360도 경장갑차 실내
+- `src/game/audio.ts`: Web Audio 방향음과 효과음
+- `src/i18n.ts`: 한국어·영어 문구와 언어 결정
+- `tests/engine.test.ts`, `tests/cockpit.test.ts`, `tests/i18n.test.ts`: 게임·3D·번역 회귀 테스트
+- `tests/app.test.tsx`: React 메뉴, 설정, 언어 전환, 게임 시작 통합 테스트
 
 ## 검증
 
 ```sh
 npm test
-npm run check
+npm run typecheck
 npm run build
 ```
 

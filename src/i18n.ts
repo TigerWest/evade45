@@ -1,5 +1,6 @@
 // UI copy lives here; simulation identifiers stay independent of language.
-export const messages = {
+export type Locale = 'ko' | 'en';
+export const messages: Record<Locale, Record<string, string>> = {
   ko: {
     'page.title':'DEAD AIR · 3D 드론 회피 게임',
     'page.description':'도보, 오토바이, 경장갑차로 45초 동안 드론을 피하는 1인칭 3D 게임입니다.',
@@ -138,21 +139,23 @@ export const messages = {
   },
 };
 
-export function resolveLocale(saved, languages=[]){
-  if(Object.hasOwn(messages,saved))return saved;
-  for(const language of languages){const base=String(language).toLowerCase().split(/[-_]/)[0];if(Object.hasOwn(messages,base))return base}
+export function resolveLocale(saved:string|null|undefined, languages:readonly string[]=[]):Locale{
+  if(saved&&Object.hasOwn(messages,saved))return saved as Locale;
+  for(const language of languages){const base=String(language).toLowerCase().split(/[-_]/)[0];if(Object.hasOwn(messages,base))return base as Locale}
   return 'en';
 }
-export function translate(locale,key,values={}){
-  const template=messages[locale]?.[key]??messages.ko[key];
+export function translate(locale:string,key:string,values:Record<string,string|number>={}):string{
+  const dictionary=Object.hasOwn(messages,locale)?messages[locale as Locale]:messages.ko;
+  const template=dictionary[key]??messages.ko[key];
   if(template===undefined)throw new Error(`Unknown translation: ${key}`);
-  return template.replace(/\{(\w+)\}/g,(match,name)=>Object.hasOwn(values,name)?String(values[name]):match);
+  return template.replace(/\{(\w+)\}/g,(match:string,name:string)=>Object.hasOwn(values,name)?String(values[name]):match);
 }
-export function applyLocale(root,locale){
+export function applyLocale(root:Document,locale:Locale){
   root.documentElement.lang=locale;
-  for(const [attribute,target] of [['data-i18n',null],['data-i18n-aria','aria-label'],['data-i18n-content','content']]){
+  const bindings:[string,string|null][]=[['data-i18n',null],['data-i18n-aria','aria-label'],['data-i18n-content','content']];
+  for(const [attribute,target] of bindings){
     for(const element of root.querySelectorAll(`[${attribute}]`)){
-      const value=translate(locale,element.getAttribute(attribute));
+      const value=translate(locale,element.getAttribute(attribute) ?? '');
       if(target)element.setAttribute(target,value);else element.textContent=value;
     }
   }

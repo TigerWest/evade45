@@ -1,20 +1,22 @@
+import type {Difficulty, DifficultyConfig, DroneState, GameInput, GameState, Mode, ModeConfig, Obstacle} from './types';
+
 export const DURATION = 45;
 export const WORLD_LIMIT = 78;
 export const PHYSICS_STEP = 1 / 120;
 export const JUMP = {speed:5.1,gravity:13.5,cost:18,cooldown:.95};
-export const MODES = {
+export const MODES: Record<Mode, ModeConfig> = {
   foot: { speed:4.9, boost:8.2, response:12, radius:.38, health:1, eye:1.68 },
   bike: { speed:13, boost:23, response:1.8, radius:.85, health:1, eye:1.48 },
   armor: { speed:8.6, boost:13.6, response:1.15, radius:1.4, health:2, eye:2.25 },
 };
 // Only top speeds reference published civilian specifications. Steering, spawn,
 // player movement, collision volumes, and commitment distances are game assumptions.
-export const DIFFICULTIES = {
+export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy:{speed:16,acceleration:10,turnAcceleration:18,commitDistance:14,interval:8,max:2,source:'Avata 2 / Sport'},
   normal:{speed:27,acceleration:14,turnAcceleration:32,commitDistance:11,interval:5.6,max:3,source:'Avata 2 / Manual'},
   hard:{speed:140/3.6,acceleration:14,turnAcceleration:42,commitDistance:8,interval:4.2,max:4,source:'DJI FPV / max'},
 };
-export const BUILDINGS = [
+export const BUILDINGS: Obstacle[] = [
   {x:-19,z:-12,w:13,d:10,h:7,kind:'house'},
   {x:18,z:-26,w:12,d:12,h:9,kind:'ruin'},
   {x:-22,z:-45,w:16,d:10,h:5,kind:'shed'},
@@ -24,7 +26,7 @@ export const BUILDINGS = [
   {x:-50,z:-23,w:12,d:12,h:9,kind:'ruin'},
   {x:46,z:45,w:17,d:10,h:6,kind:'house'},
 ];
-export const OBSTACLES = [
+export const OBSTACLES: Obstacle[] = [
   ...BUILDINGS,
   {x:12,z:-4,w:1.2,d:10,h:1.5,kind:'wall'},
   {x:-13,z:17,w:7,d:1.2,h:1.25,kind:'wall'},
@@ -33,21 +35,21 @@ export const OBSTACLES = [
   {x:36,z:-9,w:9,d:1.2,h:1.6,kind:'wall'},
   {x:-40,z:13,w:1.2,d:10,h:1.5,kind:'wall'},
 ];
-export function seededRandom(seed=73){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}}
-export function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
-export function angleDifference(a,b){return Math.atan2(Math.sin(a-b),Math.cos(a-b))}
-export function circleHitsRect(x,z,r,b){const cx=clamp(x,b.x-b.w/2,b.x+b.w/2),cz=clamp(z,b.z-b.d/2,b.z+b.d/2);return Math.hypot(x-cx,z-cz)<r}
-export function createGame(mode='foot',difficulty='normal',seed=Date.now()){
+export function seededRandom(seed=73): () => number{return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}}
+export function clamp(value:number,min:number,max:number): number{return Math.max(min,Math.min(max,value))}
+export function angleDifference(a:number,b:number): number{return Math.atan2(Math.sin(a-b),Math.cos(a-b))}
+export function circleHitsRect(x:number,z:number,r:number,b:Obstacle): boolean{const cx=clamp(x,b.x-b.w/2,b.x+b.w/2),cz=clamp(z,b.z-b.d/2,b.z+b.d/2);return Math.hypot(x-cx,z-cz)<r}
+export function createGame(mode:Mode='foot',difficulty:Difficulty='normal',seed=Date.now()): GameState{
   if(!MODES[mode]||!DIFFICULTIES[difficulty])throw new Error('Invalid configuration');
   return {mode,difficulty,status:'ready',elapsed:0,distance:0,dodges:0,nearMisses:0,random:seededRandom(seed),nextDrone:2.8,nextId:1,drones:[],explosions:[],nearest:Infinity,threat:0,damageCount:0,lastHit:'',collision:0,boundary:false,passCount:0,lastPass:null,peakDroneSpeed:0,
     player:{x:0,z:24,y:MODES[mode].eye,vx:0,vz:0,speed:0,yaw:0,bodyYaw:0,pitch:0,energy:100,health:MODES[mode].health,invulnerable:0,boosting:false,exhausted:false,altitude:0,verticalSpeed:0,jumpHeld:false,jumpCooldown:0,landing:0,dodgeX:0,dodgeZ:0}};
 }
-function hit(game,reason){
+function hit(game:GameState,reason:string){
   if(game.player.invulnerable>0||game.status!=='playing')return;
   game.player.health--;game.damageCount++;game.player.invulnerable=2;game.lastHit=reason;
   if(game.player.health<=0)game.status='lost';
 }
-function clearApproach(x,y,z,tx,ty,tz){
+function clearApproach(x:number,y:number,z:number,tx:number,ty:number,tz:number){
   // Segment versus padded boxes, including roof height. Only used to choose a
   // game spawn corridor; airborne drones retain their normal physical collisions.
   return !OBSTACLES.some(b=>{
@@ -63,7 +65,7 @@ function clearApproach(x,y,z,tx,ty,tz){
     return true;
   });
 }
-function spawnDrone(g){
+function spawnDrone(g:GameState){
   const p=g.player,diff=DIFFICULTIES[g.difficulty],first=g.nextId===1;
   const angle=first?p.yaw+.16:p.yaw+(g.random()-.5)*Math.PI*2;
   const range=first?76:70+g.random()*24;
@@ -80,11 +82,11 @@ function spawnDrone(g){
   }
   return false;
 }
-function explode(g,d,hitPlayer){
+function explode(g:GameState,d:DroneState,hitPlayer:boolean){
   g.explosions.push({x:d.x,y:Math.max(.3,d.y),z:d.z,age:0,seed:d.id});d.phase='dead';
   if(hitPlayer)hit(g,'drone');else g.dodges++;
 }
-function steerDrone(d,tx,ty,tz,diff,dt){
+function steerDrone(d:DroneState,tx:number,ty:number,tz:number,diff:DifficultyConfig,dt:number){
   const speed=Math.hypot(d.vx,d.vy,d.vz),nextSpeed=Math.min(diff.speed,speed+diff.acceleration*dt);
   const desiredLength=Math.max(.001,Math.hypot(tx-d.x,ty-d.y,tz-d.z));
   const ax=d.vx/speed,ay=d.vy/speed,az=d.vz/speed;
@@ -107,7 +109,7 @@ function steerDrone(d,tx,ty,tz,diff,dt){
   d.roll+=(bank-d.roll)*(1-Math.exp(-dt*9));
   d.vx=nx*nextSpeed;d.vy=ny*nextSpeed;d.vz=nz*nextSpeed;
 }
-function simulate(g,input,dt){
+function simulate(g:GameState,input:GameInput,dt:number){
   const p=g.player,cfg=MODES[g.mode],diff=DIFFICULTIES[g.difficulty];
   g.elapsed=Math.min(DURATION,g.elapsed+dt);p.invulnerable=Math.max(0,p.invulnerable-dt);g.collision=Math.max(0,g.collision-dt*2);
   p.jumpCooldown=Math.max(0,p.jumpCooldown-dt);p.landing=Math.max(0,p.landing-dt*3);
@@ -143,7 +145,7 @@ function simulate(g,input,dt){
     p.speed+=(desired-p.speed)*(1-Math.exp(-cfg.response*dt));
     p.vx=-Math.sin(p.bodyYaw)*p.speed;p.vz=-Math.cos(p.bodyYaw)*p.speed;
   }
-  const blocks=b=>p.altitude<b.h;
+  const blocks=(b:Obstacle)=>p.altitude<b.h;
   const nextX=clamp(p.x+p.vx*dt,-WORLD_LIMIT+cfg.radius,WORLD_LIMIT-cfg.radius);
   if(!OBSTACLES.some(b=>blocks(b)&&circleHitsRect(nextX,p.z,cfg.radius,b)))p.x=nextX;else{p.vx=0;g.collision=.4;if(g.mode!=='foot')p.speed*=Math.exp(-dt*20)}
   const nextZ=clamp(p.z+p.vz*dt,-WORLD_LIMIT+cfg.radius,WORLD_LIMIT-cfg.radius);
@@ -189,7 +191,7 @@ function simulate(g,input,dt){
   g.drones=g.drones.filter(d=>d.phase!=='dead');g.explosions=g.explosions.filter(e=>(e.age+=dt)<1.2);
   if(g.elapsed>=DURATION&&g.status==='playing')g.status='won';
 }
-export function stepGame(g,input,delta){
+export function stepGame(g:GameState,input:GameInput,delta:number){
   if(g.status!=='playing'||!Number.isFinite(delta)||delta<=0)return;
   let remaining=Math.min(delta,.25);
   while(remaining>1e-9&&g.status==='playing'){const dt=Math.min(remaining,PHYSICS_STEP,DURATION-g.elapsed);if(dt<=1e-9){g.elapsed=DURATION;g.status='won';break}simulate(g,input,dt);remaining-=dt;}
