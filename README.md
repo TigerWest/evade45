@@ -12,6 +12,12 @@ npm run dev
 
 http://127.0.0.1:5173 에 접속합니다. Node.js 20 이상과 Python 3이 필요합니다. `dist/`는 정적 웹서버에 그대로 올릴 수 있으며 Three.js도 로컬에 포함되어 외부 CDN을 호출하지 않습니다.
 
+## 방문 통계
+
+Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을 사용합니다. 측정 ID는 `G-QKQN09HT0S`이며 태그는 `dist/index.html`에 있습니다.
+
+태그는 배포 도메인 `dead-air-evasion-gbs0918.sidejump2.chatgpt.site`에서만 로드되어 로컬 개발 접속은 집계하지 않습니다. 페이지 주소에서는 쿼리 문자열과 해시를 제외합니다. 기본 페이지 조회 및 GA4 향상된 측정을 사용하며 게임별 맞춤 이벤트는 추가하지 않았습니다. 도메인을 변경하면 태그의 호스트 조건과 Analytics 웹 스트림 URL을 함께 수정하세요.
+
 ## 조작
 
 - **도보**: WASD 이동, 마우스 시선, Shift 전력 질주, Space 도보 점프
