@@ -48,6 +48,7 @@ export function App() {
     () => matchMedia('(prefers-reduced-motion:reduce)').matches,
   );
   const [helpOpen, setHelpOpen] = useState(false);
+  const helpDialogRef = useRef<HTMLDialogElement>(null);
   const [loading, setLoading] = useState(true);
   const [contextLost, setContextLost] = useState(false);
   const [, refresh] = useReducer((value: number) => value + 1, 0);
@@ -67,6 +68,14 @@ export function App() {
     (key: string, values: Record<string, string | number> = {}) => translate(locale, key, values),
     [locale],
   );
+
+  useEffect(() => {
+    const dialog = helpDialogRef.current;
+    if (!dialog) return;
+    // showModal places the dialog above the game layers and activates its backdrop.
+    if (helpOpen && !dialog.open) dialog.showModal();
+    else if (!helpOpen && dialog.open) dialog.close();
+  }, [helpOpen]);
 
   useEffect(() => {
     reducedMotionRef.current = reducedMotion;
@@ -736,14 +745,19 @@ export function App() {
           </button>
         </section>
       )}
-      <dialog id="help-dialog" open={helpOpen}>
+      <dialog
+        id="help-dialog"
+        ref={helpDialogRef}
+        aria-labelledby="help-title"
+        onClose={() => setHelpOpen(false)}
+      >
         <div className="dialog-header">
           <span className="eyebrow">{t('help.kicker')}</span>
           <button aria-label={t('help.close')} onClick={() => setHelpOpen(false)}>
             ✕
           </button>
         </div>
-        <h2>{t('help.title')}</h2>
+        <h2 id="help-title">{t('help.title')}</h2>
         <p>{t('help.description')}</p>
         <dl>
           <div>

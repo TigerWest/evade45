@@ -1424,12 +1424,15 @@ button .button-label,
   margin: 0;
 }
 #language-select {
+  appearance: none;
   font: 11px var(--sans);
   color: var(--text);
-  background: #172123;
+  background: #172123
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='m1 1 4 4 4-4' fill='none' stroke='%23ebe9df' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
   border: 1px solid #a8b49855;
   border-radius: 2px;
-  padding: 6px 4px;
+  padding: 6px 28px 6px 10px;
   max-width: 95px;
   cursor: pointer;
 }
@@ -1553,4 +1556,443 @@ html[lang='en'] .eyebrow {
   height: 100%;
   outline: none;
   touch-action: none;
+}
+
+/* Desktop typography is intentionally roomier than the compact touch layout. */
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+
+  .topbar {
+    height: clamp(96px, 9vh, 122px);
+    padding-inline: clamp(44px, 4.3vw, 82px);
+  }
+  .brand {
+    font-size: clamp(27px, 1.8vw, 34px);
+    gap: 14px;
+  }
+  .brand-cross {
+    font-size: clamp(42px, 2.8vw, 52px);
+  }
+  .brand-small {
+    max-width: 165px;
+    padding-left: 18px;
+    font-size: clamp(9px, 0.58vw, 11px);
+    line-height: 1.55;
+  }
+  .header-right {
+    gap: clamp(22px, 2vw, 36px);
+  }
+  .header-right button {
+    font-size: clamp(12px, 0.7vw, 14px);
+  }
+  .live-label {
+    font-size: clamp(10px, 0.62vw, 12px);
+  }
+  #language-select {
+    max-width: 120px;
+    padding: 8px 32px 8px 12px;
+    font-size: clamp(12px, 0.7vw, 14px);
+  }
+
+  .menu {
+    padding-inline: clamp(56px, 5.4vw, 104px);
+  }
+  .intro {
+    margin-top: 26px;
+  }
+  .eyebrow {
+    gap: 12px;
+    font-size: clamp(11px, 0.68vw, 13px);
+    letter-spacing: 2.4px;
+  }
+  .eyebrow > i {
+    width: 28px;
+  }
+  .intro h1,
+  html[lang='en'] .intro h1 {
+    margin: clamp(22px, 2vh, 30px) 0 clamp(18px, 1.8vh, 26px);
+    font-size: clamp(56px, 4.4vw, 82px);
+    line-height: 1.16;
+    letter-spacing: -3px;
+  }
+  html[lang='en'] .intro h1 {
+    letter-spacing: -2px;
+  }
+  .intro > p {
+    font-size: clamp(14px, 0.9vw, 17px);
+    line-height: 1.75;
+  }
+  .audio-note {
+    margin-top: 19px;
+    gap: 10px;
+    font-size: clamp(11px, 0.72vw, 13px);
+  }
+  .audio-note > span:first-child {
+    font-size: 19px;
+  }
+
+  .launch-panel {
+    width: min(820px, 68%);
+    max-width: none;
+    margin-top: clamp(24px, 3vh, 38px);
+  }
+  .loadout-heading {
+    margin-bottom: 15px;
+  }
+  .loadout-heading h2 {
+    font-size: clamp(13px, 0.82vw, 16px);
+  }
+  .loadout-heading > span {
+    font-size: clamp(9px, 0.56vw, 11px);
+  }
+  .loadouts {
+    gap: 11px;
+  }
+  .loadouts > button {
+    gap: 14px;
+    min-height: 76px;
+    padding: 18px 16px;
+  }
+  .loadout-num {
+    font-size: clamp(20px, 1.3vw, 25px);
+  }
+  .loadouts strong {
+    font-size: clamp(15px, 0.92vw, 18px);
+  }
+  .loadouts small {
+    margin-top: 7px;
+    font-size: clamp(10px, 0.62vw, 12px);
+    line-height: 1.45;
+  }
+  .check {
+    font-size: 14px;
+  }
+
+  .launch-bottom {
+    margin-top: 20px;
+  }
+  .difficulty-wrap {
+    gap: 18px;
+  }
+  .difficulty-wrap > span,
+  .difficulty button {
+    font-size: clamp(11px, 0.68vw, 13px);
+  }
+  .difficulty {
+    gap: 18px;
+  }
+  .primary-button {
+    min-width: 210px;
+    padding: 18px 24px;
+    font-size: clamp(14px, 0.82vw, 16px);
+  }
+  .flight-spec {
+    margin-top: 17px;
+    padding-top: 14px;
+    font-size: clamp(11px, 0.68vw, 13px);
+  }
+  .flight-spec button {
+    font-size: clamp(11px, 0.68vw, 13px);
+  }
+  .entry-note {
+    margin-top: 14px;
+    font-size: clamp(10px, 0.6vw, 12px);
+    line-height: 1.5;
+  }
+
+  .scene-label {
+    gap: 11px;
+    padding-right: 21px;
+  }
+  .scene-label > span {
+    font-size: clamp(10px, 0.6vw, 12px);
+  }
+  .scene-label > b {
+    font-size: clamp(15px, 0.9vw, 18px);
+  }
+  .scene-label > small {
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+  footer {
+    bottom: 26px;
+    font-size: clamp(10px, 0.62vw, 12px);
+  }
+  footer > span:last-child {
+    font-size: clamp(9px, 0.56vw, 11px);
+  }
+
+  .compass {
+    top: 50px;
+    gap: 30px;
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+  .compass #compass {
+    font-size: clamp(14px, 0.82vw, 16px);
+  }
+  .survival-clock {
+    top: 145px;
+    gap: 9px;
+  }
+  .survival-clock > span {
+    font-size: clamp(9px, 0.56vw, 11px);
+  }
+  .survival-clock > span:last-child {
+    font-size: clamp(8px, 0.5vw, 10px);
+  }
+  .survival-clock strong {
+    font-size: clamp(56px, 3.5vw, 68px);
+  }
+  .survival-clock strong small {
+    font-size: clamp(27px, 1.7vw, 33px);
+  }
+  .threat-telemetry {
+    top: 275px;
+    gap: 9px;
+  }
+  .threat-telemetry > span {
+    font-size: clamp(9px, 0.56vw, 11px);
+  }
+  .threat-telemetry > b {
+    font-size: clamp(15px, 0.9vw, 18px);
+  }
+  .player-state {
+    width: 220px;
+  }
+  .player-state > span,
+  .player-state > small {
+    font-size: clamp(10px, 0.62vw, 12px);
+  }
+  .energy-heading,
+  .energy-heading b {
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+  .energy-track {
+    height: 3px;
+  }
+  .live-controls {
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+  .live-controls small {
+    font-size: clamp(10px, 0.6vw, 12px);
+  }
+  .speedometer strong {
+    font-size: clamp(50px, 3.1vw, 60px);
+  }
+  .speedometer > span {
+    font-size: clamp(9px, 0.56vw, 11px);
+  }
+  #warning-label {
+    font-size: clamp(15px, 0.9vw, 18px);
+  }
+  #warning-sub {
+    font-size: clamp(10px, 0.6vw, 12px);
+  }
+  #intro-toast {
+    padding: 15px 25px;
+    font-size: clamp(13px, 0.78vw, 15px);
+  }
+  #look-hint {
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+
+  .modal-screen h2 {
+    font-size: clamp(46px, 3.6vw, 64px);
+  }
+  .modal-screen > p {
+    max-width: 560px;
+    font-size: clamp(14px, 0.86vw, 16px);
+  }
+  .text-button {
+    font-size: 13px;
+  }
+  .result-stats > div > span,
+  .modal-screen .result-reflection {
+    font-size: clamp(11px, 0.66vw, 13px);
+  }
+  .result-stats strong {
+    font-size: clamp(42px, 2.6vw, 50px);
+  }
+  .secondary-button {
+    min-width: 180px;
+    font-size: 14px;
+  }
+
+  dialog {
+    width: min(600px, calc(100% - 48px));
+    padding: 38px;
+  }
+  dialog h2 {
+    font-size: 36px;
+  }
+  dialog p,
+  .spec-sources p {
+    font-size: 14px;
+  }
+  dialog dt {
+    font-size: 11px;
+  }
+  dialog dd,
+  dialog .help-detail,
+  .motion-option {
+    font-size: 13px;
+  }
+  .spec-sources h3 {
+    font-size: 17px;
+  }
+  .loading-brand {
+    font-size: 52px;
+  }
+  #loading-text,
+  #loading > p {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 750px) {
+  .intro {
+    margin-top: 42px;
+  }
+  .intro h1,
+  html[lang='en'] .intro h1 {
+    margin: 18px 0 15px;
+    font-size: clamp(50px, 4vw, 58px);
+  }
+  .intro > p {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .audio-note {
+    margin-top: 12px;
+  }
+  .launch-panel {
+    margin-top: 22px;
+  }
+  .loadout-heading {
+    margin-bottom: 10px;
+  }
+  .loadouts > button {
+    min-height: 68px;
+    padding: 14px;
+  }
+  .launch-bottom {
+    margin-top: 13px;
+  }
+  .primary-button {
+    padding-block: 15px;
+  }
+  .flight-spec {
+    margin-top: 10px;
+    padding-top: 9px;
+  }
+  .entry-note {
+    margin-top: 9px;
+  }
+  footer {
+    bottom: 16px;
+  }
+  .survival-clock {
+    top: 115px;
+  }
+  .threat-telemetry {
+    top: 235px;
+  }
+}
+
+/* Keep ultra-wide displays readable without letting the interface dominate the scene. */
+@media (min-width: 1920px) {
+  .brand {
+    font-size: 30px;
+  }
+  .brand-cross {
+    font-size: 46px;
+  }
+  .brand-small {
+    font-size: 9px;
+  }
+  .header-right button,
+  #language-select {
+    font-size: 12px;
+  }
+  .live-label {
+    font-size: 10px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+  }
+  .intro h1,
+  html[lang='en'] .intro h1 {
+    font-size: 70px;
+  }
+  .intro > p {
+    font-size: 15px;
+  }
+  .audio-note {
+    font-size: 11px;
+  }
+
+  .launch-panel {
+    width: min(780px, 64%);
+  }
+  .loadout-heading h2 {
+    font-size: 14px;
+  }
+  .loadout-heading > span {
+    font-size: 9px;
+  }
+  .loadout-num {
+    font-size: 21px;
+  }
+  .loadouts strong {
+    font-size: 16px;
+  }
+  .loadouts small {
+    font-size: 10px;
+  }
+  .difficulty-wrap > span,
+  .difficulty button,
+  .flight-spec,
+  .flight-spec button {
+    font-size: 11px;
+  }
+  .primary-button {
+    min-width: 200px;
+    font-size: 14px;
+  }
+  .entry-note {
+    font-size: 10px;
+  }
+
+  .scene-label > span,
+  footer {
+    font-size: 10px;
+  }
+  .scene-label > b {
+    font-size: 16px;
+  }
+  .scene-label > small,
+  footer > span:last-child {
+    font-size: 9px;
+  }
+
+  .survival-clock strong {
+    font-size: 58px;
+  }
+  .survival-clock strong small {
+    font-size: 28px;
+  }
+  .speedometer strong {
+    font-size: 52px;
+  }
+  .modal-screen h2 {
+    font-size: 52px;
+  }
+  .modal-screen > p {
+    font-size: 14px;
+  }
+  .result-stats strong {
+    font-size: 44px;
+  }
 }
