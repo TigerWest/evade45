@@ -20,6 +20,7 @@
 ### Task 1: TypeScript 빌드 기반과 순수 게임 엔진
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `tsconfig.json`
 - Create: `vite.config.ts`
@@ -28,6 +29,7 @@
 - Modify: `tests/engine.test.ts`
 
 **Interfaces:**
+
 - Produces: `createGame(mode, difficulty, seed): GameState`, `stepGame(game, input, delta): void`, `Mode`, `Difficulty`, `GameInput`, `GameState`.
 
 - [x] **Step 1: Vite, React, TypeScript, R3F, Vitest 의존성과 스크립트를 선언한다.**
@@ -39,11 +41,13 @@
 ### Task 2: Three.js 장면을 React Three Fiber 생명주기로 전환
 
 **Files:**
+
 - Create: `src/game/cockpit.ts`
 - Create: `src/game/world.ts`
 - Create: `src/components/GameCanvas.tsx`
 
 **Interfaces:**
+
 - Consumes: `GameState` mutable ref and reduced-motion flag.
 - Produces: `GameCanvas` React component; `createWorld(scene, camera)` returns `update(game, time, delta, reducedMotion)` and `destroy()`.
 
@@ -56,6 +60,7 @@
 ### Task 3: UI와 입력을 React로 전환
 
 **Files:**
+
 - Create: `src/App.tsx`
 - Create: `src/main.tsx`
 - Create: `src/game/audio.ts`
@@ -64,6 +69,7 @@
 - Modify: `index.html`
 
 **Interfaces:**
+
 - Consumes: `GameCanvas`, engine API, translation catalog, audio controller.
 - Produces: React state for locale, status, loadout, difficulty, HUD, dialogs; mutable `GameState` ref shared with the frame loop.
 
@@ -76,6 +82,7 @@
 ### Task 4: 테스트, 문서, 배포 산출물 정리
 
 **Files:**
+
 - Modify: `tests/cockpit.test.ts`
 - Modify: `tests/i18n.test.ts`
 - Create: `tests/app.test.tsx`
@@ -83,6 +90,7 @@
 - Regenerate: `dist/`
 
 **Interfaces:**
+
 - Consumes: React 앱과 TypeScript 게임 모듈.
 - Produces: 엔진·번역·React UI 회귀 테스트와 정적 배포 결과.
 

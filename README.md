@@ -41,10 +41,15 @@ Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을
 ## 구성
 
 - `src/App.tsx`: React 메뉴·HUD·모달, 키보드·포인터·터치 입력, 일시정지 및 UI 상태
-- `src/components/GameCanvas.tsx`: React Three Fiber `Canvas`, `useFrame` 기반 게임·장면 프레임 연결
+- `src/components/GameCanvas.tsx`: React Three Fiber `Canvas`와 WebGL 렌더러 설정
+- `src/components/scene/GameScene.tsx`: 선언적 장면 조립과 순수 게임 엔진 프레임 연결
+- `src/components/scene/Environment.tsx`: JSX로 선언한 하늘·안개·광원·연기·먼지
+- `src/components/scene/Battlefield.tsx`: 절차적으로 생성한 정적 전장 모델의 R3F 생명주기
+- `src/components/scene/PlayerRig.tsx`: 카메라·도보 팔·차량 조종석 애니메이션
+- `src/components/scene/DroneField.tsx`, `CombatEffects.tsx`: 드론 풀과 충돌 이펙트의 독립 프레임 시스템
 - `src/game/engine.ts`: 타입이 지정된 이동, 차량 관성, 3D 드론 추적·급강하, 충돌 및 생존 판정
-- `src/game/world.ts`: R3F가 소유하는 Three.js 전장, 광원·안개·그림자와 드론 표시
-- `src/game/cockpit.ts`: 도보 팔 동작, 오토바이 조종석, 360도 경장갑차 실내
+- `src/game/world.ts`: 씬을 직접 변경하지 않는 정적 전장·드론 모델 팩토리
+- `src/game/cockpit.ts`: 카메라와 씬에 직접 결합하지 않는 도보 팔·오토바이·경장갑차 모델 팩토리
 - `src/game/audio.ts`: Web Audio 방향음과 효과음
 - `src/i18n.ts`: 한국어·영어 문구와 언어 결정
 - `tests/engine.test.ts`, `tests/cockpit.test.ts`, `tests/i18n.test.ts`: 게임·3D·번역 회귀 테스트
@@ -53,10 +58,15 @@ Google Analytics 4의 `BeomSeo > DEAD AIR` 속성과 `DEAD AIR Web` 스트림을
 ## 검증
 
 ```sh
+npm run format:check
+npm run lint
 npm test
 npm run typecheck
 npm run build
 ```
+
+`npm run format`은 Prettier로 파일을 정리하고, `npm run lint:fix`는 자동 수정 가능한
+ESLint 오류를 고칩니다. `npm run check`는 포맷, lint, 타입, 테스트, 빌드를 모두 검사합니다.
 
 승패, 피격, 장갑, 위/아래 공간 판정, 급강하 회피, 카메라 상대 이동, 차량 조향, 가속 에너지, 건물·경계 충돌을 검증합니다.
 
