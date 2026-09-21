@@ -345,6 +345,7 @@ export function App() {
   return (
     <main
       id="experience"
+      onDragStart={(event) => event.preventDefault()}
       onPointerDown={canvasPointerDown}
       onPointerMove={canvasPointerMove}
       onPointerUp={stopDrag}
@@ -398,6 +399,24 @@ export function App() {
             <i />
             {t('header.live')}
           </span>
+          <a
+            className="github-link"
+            href="https://github.com/TigerWest/evade45"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub"
+            draggable={false}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              pause();
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .75a11.25 11.25 0 0 0-3.558 21.923c.563.104.768-.244.768-.542 0-.267-.01-.974-.015-1.912-3.13.68-3.79-1.508-3.79-1.508-.512-1.3-1.25-1.646-1.25-1.646-1.022-.699.077-.685.077-.685 1.13.08 1.725 1.16 1.725 1.16 1.004 1.72 2.634 1.223 3.276.935.102-.727.393-1.223.715-1.504-2.499-.284-5.126-1.25-5.126-5.565 0-1.23.44-2.234 1.16-3.022-.116-.285-.503-1.43.11-2.98 0 0 .945-.303 3.094 1.154A10.79 10.79 0 0 1 12 6.18c.956.004 1.918.129 2.815.378 2.148-1.457 3.09-1.154 3.09-1.154.616 1.55.23 2.695.114 2.98.722.788 1.158 1.792 1.158 3.022 0 4.326-2.631 5.278-5.138 5.557.404.35.764 1.043.764 2.1 0 1.516-.014 2.739-.014 3.11 0 .3.202.651.774.541A11.251 11.251 0 0 0 12 .75Z" />
+            </svg>
+            <span>GitHub</span>
+          </a>
           <select
             id="language-select"
             value={locale}
@@ -630,6 +649,7 @@ export function App() {
               id="joystick"
               aria-label={t('touch.joystick')}
               onPointerDown={(event) => {
+                event.preventDefault();
                 event.stopPropagation();
                 stickRef.current = event.pointerId;
                 event.currentTarget.setPointerCapture(event.pointerId);
@@ -638,6 +658,7 @@ export function App() {
               onPointerMove={moveStick}
               onPointerUp={stopStick}
               onPointerCancel={stopStick}
+              onLostPointerCapture={stopStick}
             >
               <i id="joystick-knob" />
             </div>
@@ -647,12 +668,14 @@ export function App() {
                 <button
                   id="jump-button"
                   onPointerDown={(event) => {
+                    event.preventDefault();
                     event.stopPropagation();
                     event.currentTarget.setPointerCapture(event.pointerId);
                     holdAction('jump', true);
                   }}
                   onPointerUp={() => holdAction('jump', false)}
                   onPointerCancel={() => holdAction('jump', false)}
+                  onLostPointerCapture={() => holdAction('jump', false)}
                 >
                   <span className="button-label">{t('touch.jump')}</span>
                   <span>SPACE</span>
@@ -661,12 +684,14 @@ export function App() {
               <button
                 id="boost-button"
                 onPointerDown={(event) => {
+                  event.preventDefault();
                   event.stopPropagation();
                   event.currentTarget.setPointerCapture(event.pointerId);
                   holdAction('boost', true);
                 }}
                 onPointerUp={() => holdAction('boost', false)}
                 onPointerCancel={() => holdAction('boost', false)}
+                onLostPointerCapture={() => holdAction('boost', false)}
               >
                 {t('touch.boost')}
               </button>
